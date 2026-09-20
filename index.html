@@ -1230,12 +1230,12 @@
     head.className = "run-head";
     head.innerHTML =
       '<label class="run-check" title="选择此记录"><input type="checkbox" class="run-select" /></label>' +
-      '<span class="run-meta">' + escapeHtml(time) + " · " + escapeHtml(runModel || "") + usageTxt + "</span>" +
+      '<span class="run-meta">' + escapeHtml(time) + usageTxt + " · " + escapeHtml(runModel || "") + "</span>" +
       '<span class="line"></span>' +
       '<span class="run-actions">' +
-        '<button type="button" class="act act-load" title="载入该记录作为当前模板">载入</button>' +
-        '<button type="button" class="act act-download" title="下载此记录（JSON）">下载</button>' +
-        '<button type="button" class="act act-delete" title="删除此记录">删除</button>' +
+        '<button type="button" class="act act-load" title="载入此记录">\u27F3</button>' +
+        '<button type="button" class="act act-download" title="下载此记录">\u2B07</button>' +
+        '<button type="button" class="act act-delete" title="删除此记录">\u2716</button>' +
       "</span>";
     run.appendChild(head);
 
