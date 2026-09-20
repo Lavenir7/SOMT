@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>System One</title>
 <meta name="color-scheme" content="light dark" />
+<link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
 <script>
   (function () {
     try {
@@ -1672,8 +1673,11 @@
 
     if (ans.type === "noul") {
       const p = clamp01(ans.noul);
-      body.appendChild(barRow("是 (Yes)", p, true));
-      body.appendChild(barRow("否 (No)", 1 - p, false));
+      // 概率大的用绿色进度条，小的用灰色；完全相等时两条都为灰色
+      const yesWins = p > (1 - p) + 1e-9;
+      const noWins = (1 - p) > p + 1e-9;
+      body.appendChild(barRow("是 (Yes)", p, yesWins));
+      body.appendChild(barRow("否 (No)", 1 - p, noWins));
       const foot = document.createElement("div");
       foot.className = "rc-foot";
       foot.innerHTML = '<span class="chip mint big">P(是) = ' + pct(p) + '</span>' +

@@ -1,0 +1,19 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  class="brand-symbol"
+  viewBox="0 0 44 44"
+  aria-hidden="true"
+>
+  <rect x="1" y="1" width="42" height="42" rx="10" fill="currentColor"></rect>
+  <g transform="translate(0 1.5)">
+    <path
+      d="M23.5 13.5 C23.5 10.7 20.6 9.2 17.6 9.2 C13.7 9.2 10.8 11.2 10.8 14.2 C10.8 17.2 14.2 18.5 17.2 19.4 C20.2 20.3 23.5 21.7 23.5 24.7 C23.5 27.7 20.6 29.7 17.2 29.7 C13.7 29.7 10.8 28.2 10.8 25.2"
+      fill="none"
+      stroke="#FBFAF7"
+      stroke-width="5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    ></path>
+    <ellipse cx="33" cy="26.4" rx="3.8" ry="4.3" fill="none" stroke="#00BFA6" stroke-width="3"></ellipse>
+  </g>
+</svg>
