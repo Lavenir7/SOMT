@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>System One</title>
+<meta name="color-scheme" content="light dark" />
+<script>
+  (function () {
+    try {
+      var pref = localStorage.getItem("jev.theme") || "system";
+      var dark = pref === "dark" || (pref === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme-pref", pref);
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "light");
+      document.documentElement.setAttribute("data-theme-pref", "system");
+    }
+  })();
+</script>
+<script src="config.js"></script>
+<style>
+  :root{
+    color-scheme:light;
+    --paper:#fbfaf7;
+    --white:#ffffff;
+    --ink:#17151f;
+    --muted:#625c6e;
+    --mint:#00bfa6;
+    --mint-deep:#00a58f;
+    --mint-pale:#e0f5ed;
+    --mint-bright:#2ad9c1;
+    --mint-line:#bfe9de;
+    --coral:#ff4d6d;
+    --coral-pale:#ffe6ea;
+    --yellow:#ffd166;
+    --yellow-pale:#fff3d6;
+    --yellow-line:#f3dfa8;
+    --focus:#7557ff;
+    --line:#d7d3da;
+    --line-soft:#eae7ee;
+    --line-strong:#c4bfca;
+    --card-focus:#c9c2d6;
+    --placeholder:#aaa4b6;
+    --scrollbar:#d3ced9;
+    --bar-track:#efecf2;
+    --bar-fill:#cfc9d8;
+    --bar-chosen-a:#35d3bd;
+    --badge-noul-fg:#067a68;
+    --badge-choice-bg:#efe9ff;
+    --badge-choice-fg:#5b3fd6;
+    --badge-score-bg:#fff3d6;
+    --badge-score-fg:#8a6412;
+    --err-fg:#a01535;
+    --err-border:#f3c3cd;
+    --btn-primary-bg:#17151f;
+    --btn-primary-bg-hover:#2b2737;
+    --btn-primary-fg:#fbfaf7;
+    --sans:"Inter","PingFang SC","Microsoft YaHei",system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(23,21,31,.05), 0 8px 24px rgba(23,21,31,.05);
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --paper:#100e16;
+    --white:#191621;
+    --ink:#f2eff7;
+    --muted:#a49fb4;
+    --mint:#22d0b6;
+    --mint-deep:#1ec6ad;
+    --mint-pale:#0f2f2b;
+    --mint-bright:#37e0c8;
+    --mint-line:#17453d;
+    --coral:#ff6b85;
+    --coral-pale:#3a1a23;
+    --yellow:#ffd166;
+    --yellow-pale:#332b14;
+    --yellow-line:#5a4a1e;
+    --focus:#9b83ff;
+    --line:#2c2838;
+    --line-soft:#242030;
+    --line-strong:#413b4f;
+    --card-focus:#4a4260;
+    --placeholder:#6d6879;
+    --scrollbar:#3a3547;
+    --bar-track:#2a2635;
+    --bar-fill:#4a4460;
+    --bar-chosen-a:#2fd8bf;
+    --badge-noul-fg:#5fe6cf;
+    --badge-choice-bg:#271f47;
+    --badge-choice-fg:#bda9ff;
+    --badge-score-bg:#332b14;
+    --badge-score-fg:#ffd98a;
+    --err-fg:#ff9db0;
+    --err-border:#5a2532;
+    --btn-primary-bg:#f2eff7;
+    --btn-primary-bg-hover:#ffffff;
+    --btn-primary-fg:#17151f;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 10px 30px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    font-family:var(--sans);background:var(--paper);color:var(--ink);
+    font-size:14px;line-height:1.5;display:flex;flex-direction:column;
+    height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;
+  }
+  button,input,textarea{font-family:inherit}
+  .is-hidden{display:none !important}
+  ::selection{background:var(--mint-pale)}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    flex:0 0 auto;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;
+    padding:12px 20px;background:var(--white);border-bottom:1px solid var(--line);
+    z-index:5;
+  }
+  .brand{display:flex;align-items:center;gap:9px;padding-bottom:2px}
+  .brand .mark{
+    width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--mint-bright),var(--mint-deep));color:#fff;
+    font-weight:800;font-size:15px;letter-spacing:-.03em;box-shadow:0 4px 10px rgba(0,191,166,.3);
+  }
+  .brand .name{font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1.1}
+  .brand .name span{color:var(--mint-deep)}
+  .brand .sub{font-size:10.5px;color:var(--muted);letter-spacing:.02em}
+
+  .fields{display:flex;gap:12px;flex:1 1 420px;flex-wrap:wrap;align-items:flex-end}
+  .field-ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .field-ctl > label{
+    font-size:10.5px;font-weight:700;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.06em;padding-left:2px;
+  }
+  .field-ctl.url{flex:1 1 300px}
+  .field-ctl.model{flex:0 1 160px}
+  .field-ctl.key{flex:1 1 240px}
+  .key-row{display:flex;gap:8px;align-items:center}
+  .key-row input{flex:1;min-width:0}
+  .key-src{font-size:10px;font-weight:600;color:var(--badge-noul-fg);text-transform:none;letter-spacing:0;margin-left:2px}
+  input[type=text],input[type=password],textarea{
+    width:100%;font-size:13px;color:var(--ink);background:var(--white);
+    border:1px solid var(--line);border-radius:10px;padding:8px 11px;outline:none;
+    transition:border-color .15s, box-shadow .15s;resize:vertical;
+  }
+  input[type=text]:focus,input[type=password]:focus,textarea:focus{
+    border-color:var(--focus);box-shadow:0 0 0 3px rgba(117,87,255,.14);
+  }
+  input::placeholder,textarea::placeholder{color:var(--placeholder)}
+
+  .top-actions{display:flex;align-items:center;gap:12px;padding-bottom:1px;margin-left:auto}
+  .status{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);white-space:nowrap}
+  .status .dot{width:7px;height:7px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 3px var(--yellow-pale)}
+  .status.ok .dot{background:var(--mint);box-shadow:0 0 0 3px var(--mint-pale)}
+  .status.bad .dot{background:var(--coral);box-shadow:0 0 0 3px var(--coral-pale)}
+
+  .btn{
+    border:1px solid var(--line);background:var(--white);color:var(--ink);
+    border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;cursor:pointer;
+    transition:background .15s,border-color .15s,transform .05s;white-space:nowrap;
+  }
+  .btn:hover{background:var(--paper);border-color:var(--line-strong)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .btn-primary{
+    background:var(--btn-primary-bg);color:var(--btn-primary-fg);border-color:var(--btn-primary-bg);padding:9px 18px;
+    box-shadow:0 6px 16px rgba(23,21,31,.18);
+  }
+  .btn-primary:hover{background:var(--btn-primary-bg-hover);border-color:var(--btn-primary-bg-hover)}
+  .btn-primary .play{display:inline-block;transform:translateY(.5px)}
+  .btn-mint{background:var(--mint);border-color:var(--mint);color:#04211c}
+  .btn-mint:hover{background:var(--mint-deep);border-color:var(--mint-deep)}
+  .btn-ghost{background:transparent;border-color:transparent;color:var(--muted);padding:5px 8px}
+  .btn-ghost:hover{background:var(--line-soft);border-color:transparent;color:var(--ink)}
+  .btn-sm{padding:5px 10px;font-size:12px;border-radius:9px}
+  .btn-danger{background:transparent;border-color:var(--err-border);color:var(--err-fg)}
+  .btn-danger:hover{background:var(--err-border);border-color:var(--err-border);color:var(--err-fg)}
+  .btn-danger:disabled:hover{background:transparent;border-color:var(--err-border);color:var(--err-fg)}
+
+  /* ---------- layout ---------- */
+  main{
+    flex:1 1 auto;min-height:0;display:grid;gap:18px;padding:18px 20px;
+    grid-template-columns:minmax(0,7fr) minmax(0,3fr);
+  }
+  main.is-focus{grid-template-columns:minmax(0,1fr)}
+  main.is-focus .left{display:none}
+  .left,.right{min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:4px}
+  .left::-webkit-scrollbar,.right::-webkit-scrollbar{width:9px}
+  .left::-webkit-scrollbar-thumb,.right::-webkit-scrollbar-thumb{
+    background:var(--scrollbar);border-radius:99px;border:3px solid var(--paper);
+  }
+
+  .panel{
+    background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin-bottom:16px;box-shadow:var(--shadow);
+  }
+  .panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+  .panel-title{font-weight:700;font-size:15px;letter-spacing:-.01em}
+  .panel-title .en{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-left:6px}
+  .panel-head .spacer{flex:1}
+  .pill{
+    font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;
+    background:var(--paper);border:1px solid var(--line);color:var(--muted);
+  }
+  .pill.full{background:var(--yellow-pale);border-color:var(--yellow-line);color:var(--badge-score-fg)}
+
+  .counter{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .counter.warn{color:var(--coral);font-weight:700}
+
+  .seg{display:inline-flex;background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:2px}
+  .seg button{
+    border:none;background:transparent;border-radius:7px;padding:4px 11px;
+    font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;
+  }
+  .seg button.active{background:var(--white);color:var(--ink);box-shadow:0 1px 3px rgba(23,21,31,.12)}
+
+  textarea#stateInput{min-height:150px;line-height:1.6;font-size:13.5px}
+  html[data-state-mode="json"] textarea#stateInput{font-family:var(--mono);font-size:12.5px}
+
+  .hint{font-size:11.5px;color:var(--muted);margin-top:8px}
+
+  /* ---------- question cards ---------- */
+  .q-list{display:flex;flex-direction:column;gap:12px}
+  .q-card{
+    border:1px solid var(--line);border-radius:12px;background:var(--white);
+    overflow:hidden;transition:border-color .15s;
+  }
+  .q-card:focus-within{border-color:var(--card-focus)}
+  .q-head{display:flex;align-items:center;gap:9px;padding:9px 11px;background:var(--paper);border-bottom:1px solid var(--line-soft)}
+  .q-index{
+    width:26px;height:26px;flex:0 0 26px;border-radius:8px;background:var(--btn-primary-bg);color:var(--btn-primary-fg);
+    display:grid;place-items:center;font-size:11.5px;font-weight:700;
+  }
+  .q-label-input{
+    width:auto;min-width:70px;max-width:190px;border:1px solid transparent;background:transparent;
+    padding:4px 6px;border-radius:7px;font-weight:700;font-size:13.5px;
+  }
+  .q-label-input:hover{border-color:var(--line)}
+  .q-head .spacer{flex:1}
+  .icon-btn{
+    border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:7px;
+    width:26px;height:26px;display:grid;place-items:center;font-size:14px;line-height:1;
+  }
+  .icon-btn:hover{background:var(--line-soft);color:var(--ink)}
+  .icon-btn.danger:hover{background:var(--coral-pale);color:var(--coral)}
+  .q-body{padding:12px 12px 13px}
+  .q-body.collapsed{display:none}
+
+  .badge{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .badge-noul{background:var(--mint-pale);color:var(--badge-noul-fg)}
+  .badge-choice{background:var(--badge-choice-bg);color:var(--badge-choice-fg)}
+  .badge-score{background:var(--badge-score-bg);color:var(--badge-score-fg)}
+
+  .field{margin-bottom:12px}
+  .field:last-child{margin-bottom:0}
+  .field-top{display:flex;align-items:baseline;gap:8px;margin-bottom:5px}
+  .field-top label{font-size:12px;font-weight:700}
+  .field-top .en{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .field-top .spacer{flex:1}
+
+  .crit-block{border-top:1px dashed var(--line);padding-top:12px;margin-top:2px}
+  .crit-title{font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .crit-title .en{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .crit-note{font-size:11px;color:var(--muted);font-weight:400}
+
+  .opt-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
+  .opt-row .opt-name{flex:0 0 32%;min-width:90px}
+  .opt-row .opt-desc{flex:1}
+  .opt-row input{margin:0}
+  .opt-row .icon-btn{margin-top:6px;flex:0 0 auto}
+  .level-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .level-num{
+    flex:0 0 22px;height:22px;border-radius:6px;background:var(--paper);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted);
+  }
+  .level-row input{flex:1}
+  .mini-actions{display:flex;gap:2px}
+
+  .type-picker{padding:16px}
+  .type-picker-title{font-size:12.5px;font-weight:700;margin-bottom:10px}
+  .type-picker-title span{color:var(--muted);font-weight:500;margin-left:6px;font-size:11.5px}
+  .type-options{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .type-opt{
+    text-align:left;border:1px solid var(--line);border-radius:11px;background:var(--white);
+    padding:11px 12px;cursor:pointer;transition:border-color .15s,background .15s,transform .08s;
+  }
+  .type-opt:hover{border-color:var(--mint);background:var(--mint-pale);transform:translateY(-1px)}
+  .type-opt .to-name{font-weight:700;font-size:13px;display:flex;align-items:center;gap:7px}
+  .type-opt .to-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.45}
+
+  .empty{
+    text-align:center;color:var(--muted);font-size:12.5px;padding:26px 16px;
+    border:1px dashed var(--line);border-radius:12px;background:var(--paper);
+  }
+
+  /* ---------- results ---------- */
+  .right .panel{margin-bottom:0}
+  .run-head{
+    display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:2px 2px 9px;
+  }
+  .run-head .line{flex:0 0 14px;height:1px;background:var(--line-soft)}
+  .run-head .run-meta{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .run-check{display:inline-flex;align-items:center;flex:0 0 auto;cursor:pointer}
+  .run-check input{width:14px;height:14px;margin:0;cursor:pointer;accent-color:var(--mint)}
+  .run-actions{display:flex;align-items:center;gap:2px;flex:0 0 auto;opacity:.5;transition:opacity .15s}
+  .run:hover .run-actions,.run:focus-within .run-actions{opacity:1}
+  .run-actions .act{
+    border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;
+    font:inherit;font-size:10.5px;font-weight:700;letter-spacing:.04em;padding:2px 7px;border-radius:7px;
+    transition:background .15s,color .15s,border-color .15s;
+  }
+  .run-actions .act:hover{background:var(--line-soft);color:var(--ink)}
+  .run-actions .act-delete:hover{background:var(--err-border);color:var(--err-fg)}
+  .sel-tools{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .sel-tools .btn{padding:4px 9px;font-size:11.5px}
+  .log-select-all{display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:11.5px;font-weight:700;color:var(--ink)}
+  .log-select-all input{width:13px;height:13px;margin:0;cursor:pointer;accent-color:var(--mint)}
+  .log-selected{font-size:11.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+  .run + .run{margin-top:18px}
+  .results-more{
+    display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;
+    margin:14px 0 2px;font-size:11.5px;color:var(--muted);
+  }
+
+  .result-card{
+    border:1px solid var(--line);border-radius:12px;background:var(--white);
+    margin-bottom:10px;overflow:hidden;transition:border-color .15s,box-shadow .15s;
+  }
+  .result-card.open{border-color:var(--card-focus);box-shadow:var(--shadow)}
+  .result-card.is-expanded{border-color:var(--mint);box-shadow:0 14px 44px rgba(23,21,31,.14)}
+  :root[data-theme="dark"] .result-card.is-expanded{box-shadow:0 14px 44px rgba(0,0,0,.55)}
+  .rc-head{
+    display:flex;align-items:center;gap:8px;width:100%;border:none;background:transparent;
+    padding:10px 12px;cursor:pointer;text-align:left;color:inherit;
+  }
+  .rc-head:hover{background:var(--paper)}
+  .rc-label{font-weight:700;font-size:13.5px}
+  .rc-summary{
+    margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);
+    max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .rc-summary b{color:var(--ink)}
+  .rc-expand{
+    flex:0 0 auto;width:24px;height:24px;display:grid;place-items:center;border-radius:7px;
+    color:var(--muted);font-size:12px;cursor:pointer;line-height:1;
+  }
+  .rc-expand:hover{background:var(--line-soft);color:var(--ink)}
+  .result-card.is-expanded .rc-expand{background:var(--mint-pale);color:var(--badge-noul-fg)}
+  .rc-chevron{color:var(--muted);font-size:12px;transition:transform .2s;flex:0 0 auto}
+  .result-card.open .rc-chevron{transform:rotate(180deg)}
+  .result-card:not(.open) .rc-body{display:none}
+  .rc-body{padding:2px 12px 13px;animation:fade .22s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+
+  .bar-row{margin-bottom:9px}
+  .bar-row:last-child{margin-bottom:0}
+  .bar-top{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
+  .bar-key{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-key .tag{font-size:9.5px;font-weight:700;color:var(--mint-deep);background:var(--mint-pale);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+  .bar-val{margin-left:auto;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
+  .bar-track{height:9px;background:var(--bar-track);border-radius:999px;overflow:hidden}
+  .bar-fill{
+    height:100%;border-radius:999px;background:var(--bar-fill);
+    transition:width .65s cubic-bezier(.2,.8,.2,1);
+  }
+  .bar-row.is-chosen .bar-fill{background:linear-gradient(90deg,var(--bar-chosen-a),var(--mint-deep))}
+  .bar-row.is-chosen .bar-val{color:var(--ink)}
+  .bar-row.is-chosen .bar-key{color:var(--ink)}
+
+  .rc-foot{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);
+  }
+  .chip{
+    font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;
+    background:var(--paper);border:1px solid var(--line);color:var(--muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .chip.mint{background:var(--mint-pale);border-color:var(--mint-line);color:var(--badge-noul-fg)}
+  .chip.big{font-size:12px;padding:4px 11px}
+  .rc-note{margin-left:auto;font-size:10.5px;color:var(--muted)}
+
+  .rc-snapshot{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+  .rc-snapshot > summary{
+    cursor:pointer;font-size:11.5px;font-weight:600;color:var(--muted);
+    list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none;
+  }
+  .rc-snapshot > summary::-webkit-details-marker{display:none}
+  .rc-snapshot > summary::before{content:"▸";font-size:9px;transition:transform .15s}
+  .rc-snapshot[open] > summary::before{transform:rotate(90deg)}
+  .rc-snapshot > summary:hover{color:var(--ink)}
+  .snap-heading{font-size:11px;font-weight:700;margin:10px 0 4px;color:var(--ink)}
+  .snap-body{
+    font-size:11.5px;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0;
+    font-family:var(--mono);max-height:240px;overflow:auto;
+  }
+  .snap-list{margin:0;padding-left:18px;font-size:11.5px;color:var(--ink)}
+  .snap-list li{margin:3px 0}
+  .snap-caption{margin:10px 0 0;font-size:10px;color:var(--muted);font-family:var(--mono)}
+
+  .result-error{
+    border:1px solid var(--err-border);background:var(--coral-pale);color:var(--err-fg);
+    border-radius:12px;padding:12px 13px;font-size:12.5px;margin-bottom:10px;
+  }
+  .result-error b{display:block;margin-bottom:3px}
+  .result-error pre{
+    margin:8px 0 0;white-space:pre-wrap;word-break:break-word;font-family:var(--mono);
+    font-size:11px;background:var(--white);border:1px solid var(--err-border);border-radius:8px;padding:8px;
+  }
+  .loading{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:12.5px;padding:14px 4px}
+  .spinner{
+    width:15px;height:15px;border:2px solid var(--line);border-top-color:var(--mint);
+    border-radius:50%;animation:spin .7s linear infinite;
+  }
+  .run-spinner{width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;opacity:.85;vertical-align:-1px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- toast ---------- */
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+  .toast{
+    background:var(--btn-primary-bg);color:var(--btn-primary-fg);font-size:12.5px;font-weight:600;padding:9px 15px;
+    border-radius:10px;box-shadow:0 10px 30px rgba(23,21,31,.28);animation:toastIn .2s ease;
+    max-width:min(90vw,520px);
+  }
+  .toast.err{background:var(--coral);color:var(--btn-primary-fg)}
+  @keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  /* ---------- modal ---------- */
+  .modal-backdrop{
+    position:fixed;inset:0;z-index:60;background:rgba(23,21,31,.42);
+    display:flex;align-items:center;justify-content:center;padding:20px;animation:fadeIn .12s ease;
+  }
+  :root[data-theme="dark"] .modal-backdrop{background:rgba(0,0,0,.6)}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{
+    width:min(440px,100%);background:var(--white);border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 24px 60px rgba(23,21,31,.3);padding:18px 18px 14px;animation:modalIn .16s ease;
+  }
+  :root[data-theme="dark"] .modal{box-shadow:0 24px 60px rgba(0,0,0,.6)}
+  @keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+  .modal-title{font-size:15px;font-weight:800;margin-bottom:8px}
+  .modal-msg{font-size:13px;line-height:1.6;color:var(--muted);white-space:pre-wrap;margin-bottom:16px}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px}
+
+  @media (max-width:1040px){
+    body{overflow:auto;height:auto}
+    main{grid-template-columns:1fr;height:auto}
+    .left,.right{overflow:visible}
+    .type-options{grid-template-columns:1fr}
+    .opt-row{flex-wrap:wrap}
+    .opt-row .opt-name{flex:1 1 100%}
+  }
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="mark">AI</div>
+      <div>
+        <div class="name">System <span>One</span></div>
+        <div class="sub">Structured decision</div>
+      </div>
+    </div>
+
+    <div class="fields">
+      <div class="field-ctl url">
+        <label for="apiUrl">API URL</label>
+        <input id="apiUrl" type="text" spellcheck="false" value="https://api.typesafe.ai/v1/systemone" />
+      </div>
+      <div class="field-ctl model">
+        <label for="model">Model</label>
+        <input id="model" type="text" spellcheck="false" list="modelList" value="jev-latest" />
+        <datalist id="modelList">
+          <option value="jev-latest"></option>
+        </datalist>
+      </div>
+      <div class="field-ctl key">
+        <label for="apiKey">API Key <span class="key-src" id="keySource"></span></label>
+        <div class="key-row">
+          <input id="apiKey" type="password" spellcheck="false" placeholder="apikey_..." autocomplete="off" />
+          <button type="button" class="btn btn-sm" id="saveKeyBtn" title="保存到本地文件 systemone.apikey">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-actions">
+      <div class="seg theme-seg" id="themeSeg" role="group" aria-label="主题">
+        <button type="button" data-theme="light" title="亮色主题">亮</button>
+        <button type="button" data-theme="dark" title="暗色主题">暗</button>
+        <button type="button" data-theme="system" title="跟随系统">跟随</button>
+      </div>
+      <div class="status" id="proxyStatus"><span class="dot"></span><span id="proxyText">检测中…</span></div>
+      <button class="btn btn-primary" id="runBtn"><span class="play">▶</span> 运行 Jev</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- ================= LEFT ================= -->
+    <section class="left">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">状态<span class="en">state</span></div>
+          <div class="spacer"></div>
+          <div class="seg" id="stateMode">
+            <button data-mode="text" class="active">文本</button>
+            <button data-mode="json">JSON</button>
+          </div>
+          <span class="counter" id="stateCounter">0</span>
+        </div>
+        <textarea id="stateInput"
+          placeholder="需要判断的材料：一段文字、一封邮件、一条评论、一份记录 ..."></textarea>
+        <div class="hint">State 可以是简单字符串，也可以是结构化 JSON 值</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">问题<span class="en">questions</span></div>
+          <div class="spacer"></div>
+          <span class="pill" id="qCount">0</span>
+          <button class="btn btn-sm btn-mint" id="addQBtn">＋ 添加问题</button>
+        </div>
+        <div class="q-list" id="qList"></div>
+        <div class="empty" id="qEmpty">暂无问题<br />点击「添加问题」按钮</div>
+      </div>
+    </section>
+
+    <!-- ================= RIGHT ================= -->
+    <aside class="right">
+      <div class="panel">
+        <div class="panel-head">
+          <div class="panel-title">结果<span class="en">answers</span></div>
+          <div class="spacer"></div>
+          <button class="btn btn-sm btn-ghost is-hidden" id="exitFocusBtn">退出全宽</button>
+          <span class="sel-tools is-hidden" id="selTools">
+            <label class="log-select-all" title="选择全部记录">
+              <input type="checkbox" id="selectAllRuns" /> 全选
+            </label>
+            <span class="log-selected" id="logSelected">已选 0/0</span>
+            <button type="button" class="btn btn-sm" id="downloadSelBtn" disabled title="下载选中的记录">下载</button>
+            <button type="button" class="btn btn-sm btn-danger" id="deleteSelBtn" disabled title="删除选中的记录">删除</button>
+          </span>
+        </div>
+        <div id="results">
+          <div class="empty">暂无结果<br /><br />运行 Jev 以获得结果</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div id="toast"></div>
+
+  <div class="modal-backdrop is-hidden" id="modal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-title" id="modalTitle">确认</div>
+      <div class="modal-msg" id="modalMsg"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="modalCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="modalOk">确定</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  const DEFAULT_LIMITS = {
+    maxState: 1000,
+    maxInstructions: 300,
+    maxQuestions: 15,
+    maxChoiceOptions: 128,
+    maxQuestionLabel: 40,
+    maxOptionName: 80,
+    maxOptionDesc: 200,
+    minScoreLevels: 2,
+    maxScoreLevels: 10,
+    maxLevelText: 200,
+    resultLimit: 20,
+    historyLimit: 100
+  };
+  const LIMITS = Object.assign({}, DEFAULT_LIMITS, (window.JEV_LIMITS || {}));
+  const MAX_STATE = LIMITS.maxState;
+  const MAX_INSTR = LIMITS.maxInstructions;
+  const MAX_QUESTIONS = LIMITS.maxQuestions;
+  const MAX_CHOICE_OPTIONS = LIMITS.maxChoiceOptions;
+  const MIN_LEVELS = LIMITS.minScoreLevels;
+  const MAX_LEVELS = LIMITS.maxScoreLevels;
+
+  const TYPE_META = {
+    noul:   { label: "是非", badge: "badge-noul",   desc: "回答「是 / 否」并给出概率，适合验证与判断。" },
+    choice: { label: "选择", badge: "badge-choice", desc: "从你定义的选项中选出一项，给出每个选项的概率。" },
+    score:  { label: "评分", badge: "badge-score",  desc: "按有序等级评分，给出加权得分与各等级概率。" }
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    apiUrl: $("apiUrl"), model: $("model"), apiKey: $("apiKey"),
+    stateInput: $("stateInput"), stateCounter: $("stateCounter"),
+    stateMode: $("stateMode"),
+    qList: $("qList"), qEmpty: $("qEmpty"), qCount: $("qCount"), addQBtn: $("addQBtn"),
+    results: $("results"), runBtn: $("runBtn"),
+    exitFocusBtn: $("exitFocusBtn"),
+    proxyStatus: $("proxyStatus"), proxyText: $("proxyText"),
+    themeSeg: $("themeSeg"),
+    saveKeyBtn: $("saveKeyBtn"), keySource: $("keySource"),
+    toast: $("toast"),
+    selTools: $("selTools"), selectAllRuns: $("selectAllRuns"), logSelected: $("logSelected"),
+    downloadSelBtn: $("downloadSelBtn"), deleteSelBtn: $("deleteSelBtn"),
+    modal: $("modal"), modalTitle: $("modalTitle"), modalMsg: $("modalMsg"),
+    modalOk: $("modalOk"), modalCancel: $("modalCancel")
+  };
+
+  /* ============ theme (light / dark / system) ============ */
+  const THEME_KEY = "jev.theme";
+  const darkMql = window.matchMedia("(prefers-color-scheme: dark)");
+  let themePref = document.documentElement.getAttribute("data-theme-pref") || "system";
+
+  function applyTheme(pref, persist) {
+    themePref = pref;
+    const resolved = pref === "system" ? (darkMql.matches ? "dark" : "light") : pref;
+    document.documentElement.setAttribute("data-theme", resolved);
+    document.documentElement.setAttribute("data-theme-pref", pref);
+    if (el.themeSeg) {
+      [].forEach.call(el.themeSeg.children, (b) => b.classList.toggle("active", b.dataset.theme === pref));
+    }
+    if (persist) { try { localStorage.setItem(THEME_KEY, pref); } catch (e) {} }
+  }
+  applyTheme(themePref, false);
+  if (el.themeSeg) {
+    el.themeSeg.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-theme]");
+      if (b) applyTheme(b.dataset.theme, true);
+    });
+  }
+  const onSystemThemeChange = () => { if (themePref === "system") applyTheme("system", false); };
+  if (darkMql.addEventListener) darkMql.addEventListener("change", onSystemThemeChange);
+  else if (darkMql.addListener) darkMql.addListener(onSystemThemeChange);
+
+  /* ============ config persistence (key is intentionally not stored) ============ */
+  try {
+    const savedUrl = localStorage.getItem("jev.apiUrl");
+    const savedModel = localStorage.getItem("jev.model");
+    if (savedUrl) el.apiUrl.value = savedUrl;
+    if (savedModel) el.model.value = savedModel;
+  } catch (e) {}
+  el.apiUrl.addEventListener("change", () => { try { localStorage.setItem("jev.apiUrl", el.apiUrl.value.trim()); } catch (e) {} });
+  el.model.addEventListener("change", () => { try { localStorage.setItem("jev.model", el.model.value.trim()); } catch (e) {} });
+
+  /* ============ proxy detection & server-side API key ============ */
+  let proxyAvailable = false;
+  let serverKey = { hasKey: false, source: null, keyHint: null };
+
+  function updateKeyUI() {
+    if (serverKey.hasKey) {
+      const where = serverKey.source === "file" ? "文件" : (serverKey.source === "env" ? "环境变量" : "服务端");
+      el.apiKey.placeholder = "已自动读取，留空即使用";
+      el.keySource.textContent = (serverKey.keyHint || "") + " · " + where;
+    } else {
+      el.apiKey.placeholder = proxyAvailable ? "粘贴你的 API Key…（可保存到本地文件）" : "粘贴你的 API Key…";
+      el.keySource.textContent = "";
+    }
+    if (el.saveKeyBtn) el.saveKeyBtn.style.display = proxyAvailable ? "" : "none";
+  }
+
+  function safeUpdateKeyUI() {
+    try { updateKeyUI(); } catch (e) { if (window.console) console.error("updateKeyUI failed:", e); }
+  }
+
+  fetch("/api/health", { cache: "no-store" })
+    .then((r) => r.ok ? r.json() : Promise.reject())
+    .then((d) => {
+      proxyAvailable = !!(d && d.ok);
+      setProxyStatus(proxyAvailable ? "代理已连接" : "直连模式", proxyAvailable ? "ok" : "warn");
+      if (!proxyAvailable) { safeUpdateKeyUI(); return; }
+      return fetch("/api/config", { cache: "no-store" })
+        .then((r) => r.ok ? r.json() : null)
+        .then((cfg) => { if (cfg) serverKey = cfg; })
+        .catch((e) => { if (window.console) console.error("load /api/config failed:", e); })
+        .then(() => { safeUpdateKeyUI(); loadHistory(); });
+    })
+    .catch((e) => {
+      if (window.console) console.error("proxy detection failed:", e);
+      setProxyStatus("直连模式（可能受 CORS 限制）", "bad");
+      safeUpdateKeyUI();
+    });
+
+  if (el.saveKeyBtn) {
+    el.saveKeyBtn.addEventListener("click", () => {
+      const key = el.apiKey.value.trim();
+      if (!key) { toast("请先在上方填写要保存的 API Key"); el.apiKey.focus(); return; }
+      el.saveKeyBtn.disabled = true;
+      fetch("/api/apikey", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ apiKey: key })
+      })
+        .then((r) => r.json().then((d) => { if (!r.ok) throw new Error(pickErrorMessage(d) || ("HTTP " + r.status)); return d; }))
+        .then((d) => {
+          serverKey = d || { hasKey: true, source: "file", keyHint: null };
+          el.apiKey.value = "";
+          updateKeyUI();
+          toast("已保存到 systemone.apikey");
+        })
+        .catch((e) => toast("保存失败：" + e.message, true))
+        .finally(() => { el.saveKeyBtn.disabled = false; });
+    });
+  }
+
+  function setProxyStatus(text, kind) {
+    el.proxyText.textContent = text;
+    el.proxyStatus.className = "status " + (kind === "ok" ? "ok" : kind === "bad" ? "bad" : "");
+  }
+
+  /* ============ toast ============ */
+  function toast(msg, isErr) {
+    const t = document.createElement("div");
+    t.className = "toast" + (isErr ? " err" : "");
+    t.textContent = msg;
+    el.toast.appendChild(t);
+    setTimeout(() => { t.style.opacity = "0"; t.style.transition = "opacity .25s"; }, 2200);
+    setTimeout(() => t.remove(), 2550);
+  }
+
+  /* ============ state panel ============ */
+  let stateMode = "text";
+  function updateStateCounter() {
+    const n = el.stateInput.value.length;
+    el.stateCounter.textContent = n + " / " + MAX_STATE;
+    el.stateCounter.classList.toggle("warn", n >= MAX_STATE);
+  }
+  el.stateInput.addEventListener("input", updateStateCounter);
+  el.stateInput.maxLength = MAX_STATE;
+  updateStateCounter();
+
+  function setStateMode(mode) {
+    if (mode !== "json" && mode !== "text") mode = "text";
+    stateMode = mode;
+    [].forEach.call(el.stateMode.children, (b) => b.classList.toggle("active", b.dataset.mode === mode));
+    document.documentElement.setAttribute("data-state-mode", mode);
+    el.stateInput.placeholder = mode === "json"
+      ? '{\n  "message": "My card was charged twice.",\n  "order_id": "A-104"\n}'
+      : "把你希望 Jev 判断的材料放进来：一段文字、一封邮件、一条评论、一份记录……";
+  }
+  el.stateMode.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-mode]");
+    if (btn) setStateMode(btn.dataset.mode);
+  });
+
+  /* ============ questions ============ */
+  let questions = [];
+  let qseq = 0;
+
+  function newQuestion(type) {
+    qseq += 1;
+    return {
+      id: "id_" + qseq,
+      label: "Q" + (questions.length + 1),
+      type: type,
+      instructions: "",
+      choice: [ { name: "", desc: "" }, { name: "", desc: "" } ],
+      score: ["", ""],
+      noulTrue: "",
+      noulFalse: "",
+      open: true
+    };
+  }
+
+  function updateQCount() {
+    el.qCount.textContent = questions.length + " / " + MAX_QUESTIONS;
+    el.qCount.classList.toggle("full", questions.length >= MAX_QUESTIONS);
+    el.addQBtn.disabled = questions.length >= MAX_QUESTIONS;
+    el.qEmpty.style.display = questions.length ? "none" : "";
+  }
+
+  el.addQBtn.addEventListener("click", () => {
+    if (questions.length >= MAX_QUESTIONS) { toast("最多添加 " + MAX_QUESTIONS + " 个问题", true); return; }
+    const q = newQuestion(null); // null => waiting for type selection
+    questions.push(q);
+    renderQuestions();
+    const card = el.qList.querySelector('[data-id="' + q.id + '"]');
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+
+  function renderQuestions() {
+    el.qList.innerHTML = "";
+    questions.forEach((q, i) => el.qList.appendChild(createCard(q, i)));
+    updateQCount();
+  }
+
+  function createCard(q, index) {
+    const card = document.createElement("div");
+    card.className = "q-card";
+    card.dataset.id = q.id;
+
+    if (!q.type) {
+      card.classList.add("type-card");
+      card.innerHTML =
+        '<div class="type-picker">' +
+          '<div class="type-picker-title">选择问题类型<span>为 Q' + (index + 1) + ' 选择一种提问方式</span></div>' +
+          '<div class="type-options">' +
+            Object.keys(TYPE_META).map((t) =>
+              '<button type="button" class="type-opt" data-type="' + t + '">' +
+                '<div class="to-name"><span class="badge ' + TYPE_META[t].badge + '">' + TYPE_META[t].label + '</span>' +
+                '<span>' + t + '</span></div>' +
+                '<div class="to-desc">' + TYPE_META[t].desc + '</div>' +
+              '</button>'
+            ).join("") +
+          '</div>' +
+        '</div>';
+      card.querySelector(".type-options").addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-type]");
+        if (!b) return;
+        q.type = b.dataset.type;
+        renderQuestions();
+      });
+      return card;
+    }
+
+    const meta = TYPE_META[q.type];
+
+    // header
+    const head = document.createElement("div");
+    head.className = "q-head";
+    head.innerHTML =
+      '<div class="q-index">Q' + (index + 1) + '</div>' +
+      '<input class="q-label-input" type="text" spellcheck="false" maxlength="' + LIMITS.maxQuestionLabel + '" />' +
+      '<span class="badge ' + meta.badge + '">' + meta.label + '</span>' +
+      '<div class="spacer"></div>' +
+      '<button type="button" class="icon-btn q-collapse" title="折叠/展开">▾</button>' +
+      '<button type="button" class="icon-btn danger q-del" title="删除">✕</button>';
+    const labelInput = head.querySelector(".q-label-input");
+    labelInput.value = q.label;
+    labelInput.addEventListener("input", () => { q.label = labelInput.value; labelInput.title = q.label; });
+    head.querySelector(".q-collapse").addEventListener("click", () => {
+      q.open = !q.open;
+      body.classList.toggle("collapsed", !q.open);
+      head.querySelector(".q-collapse").style.transform = q.open ? "" : "rotate(-90deg)";
+    });
+    head.querySelector(".q-del").addEventListener("click", () => {
+      questions = questions.filter((x) => x.id !== q.id);
+      renderQuestions();
+    });
+    card.appendChild(head);
+
+    // body
+    const body = document.createElement("div");
+    body.className = "q-body" + (q.open ? "" : " collapsed");
+    if (!q.open) head.querySelector(".q-collapse").style.transform = "rotate(-90deg)";
+
+    // instructions
+    const f = document.createElement("div");
+    f.className = "field";
+    f.innerHTML =
+      '<div class="field-top"><label>Instructions</label><span class="en">prompt</span>' +
+      '<span class="spacer"></span><span class="counter q-instr-counter">0 / ' + MAX_INSTR + '</span></div>';
+    const ta = document.createElement("textarea");
+    ta.rows = 3;
+    ta.maxLength = MAX_INSTR;
+    ta.spellcheck = false;
+    ta.placeholder = {
+      noul: "例如：这段文字是否表达了紧急情绪？",
+      choice: "例如：这条消息应该由哪个团队处理？",
+      score: "例如：这篇文案的清晰度如何？"
+    }[q.type];
+    ta.value = q.instructions;
+    const ctr = f.querySelector(".q-instr-counter");
+    const sync = () => {
+      ctr.textContent = ta.value.length + " / " + MAX_INSTR;
+      ctr.classList.toggle("warn", ta.value.length >= MAX_INSTR);
+    };
+    ta.addEventListener("input", () => { q.instructions = ta.value; sync(); });
+    sync();
+    f.appendChild(ta);
+    body.appendChild(f);
+
+    // criteria
+    const crit = document.createElement("div");
+    crit.className = "crit-block";
+    body.appendChild(crit);
+    renderCriteria(crit, q);
+
+    card.appendChild(body);
+    return card;
+  }
+
+  function renderCriteria(container, q) {
+    container.innerHTML = "";
+    if (q.type === "noul") {
+      container.innerHTML =
+        '<div class="crit-title">Criteria <span class="en">optional</span>' +
+        '<span class="crit-note">可选：分别描述「是」与「否」的边界</span></div>' +
+        '<div class="field"><div class="field-top"><label>判为「是」的含义</label><span class="en">true</span></div></div>' +
+        '<div class="field"><div class="field-top"><label>判为「否」的含义</label><span class="en">false</span></div></div>';
+      const taT = document.createElement("textarea");
+      const taF = document.createElement("textarea");
+      [taT, taF].forEach((t) => { t.rows = 2; t.spellcheck = false; t.placeholder = "可留空"; });
+      taT.value = q.noulTrue; taF.value = q.noulFalse;
+      taT.addEventListener("input", () => q.noulTrue = taT.value);
+      taF.addEventListener("input", () => q.noulFalse = taF.value);
+      container.querySelectorAll(".field")[0].appendChild(taT);
+      container.querySelectorAll(".field")[1].appendChild(taF);
+      return;
+    }
+
+    if (q.type === "choice") {
+      const wrap = document.createElement("div");
+      wrap.innerHTML =
+        '<div class="crit-title">Criteria <span class="en">options</span>' +
+        '<span class="crit-note">2–' + MAX_CHOICE_OPTIONS + ' 个选项（选项名作为 key，描述可留空）</span></div>';
+      const list = document.createElement("div");
+      const render = () => {
+        list.innerHTML = "";
+        q.choice.forEach((opt, i) => {
+          const row = document.createElement("div");
+          row.className = "opt-row";
+          const name = document.createElement("input");
+          name.type = "text"; name.className = "opt-name"; name.placeholder = "选项 " + (i + 1);
+          name.maxLength = LIMITS.maxOptionName; name.value = opt.name;
+          name.addEventListener("input", () => opt.name = name.value);
+          const desc = document.createElement("input");
+          desc.type = "text"; desc.className = "opt-desc"; desc.placeholder = "描述（可选）";
+          desc.maxLength = LIMITS.maxOptionDesc; desc.value = opt.desc;
+          desc.addEventListener("input", () => opt.desc = desc.value);
+          const del = document.createElement("button");
+          del.type = "button"; del.className = "icon-btn danger"; del.textContent = "✕"; del.title = "删除选项";
+          del.disabled = q.choice.length <= 2;
+          del.style.opacity = q.choice.length <= 2 ? ".35" : "";
+          del.addEventListener("click", () => {
+            if (q.choice.length <= 2) return;
+            q.choice.splice(i, 1); render(); syncAdd();
+          });
+          row.appendChild(name); row.appendChild(desc); row.appendChild(del);
+          list.appendChild(row);
+        });
+      };
+      render();
+      const add = document.createElement("button");
+      add.type = "button"; add.className = "btn btn-sm";
+      const syncAdd = () => {
+        add.textContent = "＋ 添加选项（" + q.choice.length + "/" + MAX_CHOICE_OPTIONS + "）";
+        add.disabled = q.choice.length >= MAX_CHOICE_OPTIONS;
+      };
+      add.addEventListener("click", () => {
+        if (q.choice.length >= MAX_CHOICE_OPTIONS) { toast("最多只能添加 " + MAX_CHOICE_OPTIONS + " 个选项", true); return; }
+        q.choice.push({ name: "", desc: "" });
+        render();
+        syncAdd();
+      });
+      syncAdd();
+      container.appendChild(wrap);
+      container.appendChild(list);
+      container.appendChild(add);
+      return;
+    }
+
+    if (q.type === "score") {
+      const wrap = document.createElement("div");
+      wrap.innerHTML =
+        '<div class="crit-title">Criteria <span class="en">levels</span>' +
+        '<span class="crit-note">按从低到高排列，' + MIN_LEVELS + '–' + MAX_LEVELS + ' 个等级</span></div>';
+      const list = document.createElement("div");
+      const render = () => {
+        list.innerHTML = "";
+        q.score.forEach((lvl, i) => {
+          const row = document.createElement("div");
+          row.className = "level-row";
+          const num = document.createElement("div");
+          num.className = "level-num"; num.textContent = i;
+          const inp = document.createElement("input");
+          inp.type = "text"; inp.placeholder = "等级 " + i + " 的描述";
+          inp.maxLength = LIMITS.maxLevelText; inp.value = lvl;
+          inp.addEventListener("input", () => q.score[i] = inp.value);
+          const acts = document.createElement("div");
+          acts.className = "mini-actions";
+          const up = document.createElement("button");
+          up.type = "button"; up.className = "icon-btn"; up.textContent = "↑"; up.title = "上移";
+          up.disabled = i === 0;
+          up.addEventListener("click", () => { const t = q.score[i - 1]; q.score[i - 1] = q.score[i]; q.score[i] = t; render(); });
+          const dn = document.createElement("button");
+          dn.type = "button"; dn.className = "icon-btn"; dn.textContent = "↓"; dn.title = "下移";
+          dn.disabled = i === q.score.length - 1;
+          dn.addEventListener("click", () => { const t = q.score[i + 1]; q.score[i + 1] = q.score[i]; q.score[i] = t; render(); });
+          const del = document.createElement("button");
+          del.type = "button"; del.className = "icon-btn danger"; del.textContent = "✕"; del.title = "删除等级";
+          del.disabled = q.score.length <= MIN_LEVELS;
+          del.style.opacity = q.score.length <= MIN_LEVELS ? ".35" : "";
+          del.addEventListener("click", () => { if (q.score.length <= MIN_LEVELS) return; q.score.splice(i, 1); render(); });
+          acts.appendChild(up); acts.appendChild(dn); acts.appendChild(del);
+          row.appendChild(num); row.appendChild(inp); row.appendChild(acts);
+          list.appendChild(row);
+        });
+      };
+      render();
+      const add = document.createElement("button");
+      add.type = "button"; add.className = "btn btn-sm"; add.textContent = "＋ 添加等级";
+      add.disabled = q.score.length >= MAX_LEVELS;
+      add.addEventListener("click", () => { if (q.score.length >= MAX_LEVELS) return; q.score.push(""); render(); });
+      container.appendChild(wrap);
+      container.appendChild(list);
+      container.appendChild(add);
+    }
+  }
+
+  /* ============ run ============ */
+  el.runBtn.addEventListener("click", run);
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); run(); }
+    else if (e.key === "Escape" && el.modal && !el.modal.classList.contains("is-hidden")) closeModal(false);
+    else if (e.key === "Escape" && focusedCard) exitFocus();
+  });
+
+  function run() {
+    const apiUrl = el.apiUrl.value.trim();
+    const apiKey = el.apiKey.value.trim();
+    const model = el.model.value.trim() || "jev-latest";
+
+    if (!apiUrl) { toast("请填写 API URL", true); return; }
+    if (!apiKey && !serverKey.hasKey) { toast("请填写 API Key，或将其保存到 systemone.apikey", true); el.apiKey.focus(); return; }
+    if (!questions.length) { toast("请至少添加一个问题", true); return; }
+
+    // state
+    const raw = el.stateInput.value;
+    let state;
+    if (stateMode === "json") {
+      const text = raw.trim();
+      if (!text) { toast("JSON 模式下 State 不能为空", true); return; }
+      try { state = JSON.parse(text); }
+      catch (err) { toast("State 不是合法 JSON：" + err.message, true); return; }
+    } else {
+      state = raw;
+      if (!state.trim()) { toast("请填写 State", true); return; }
+    }
+
+    // questions -> API map
+    const map = {};
+    const keyById = {};
+    const used = {};
+    for (let i = 0; i < questions.length; i++) {
+      const q = questions[i];
+      if (!q.type) { toast("第 " + (i + 1) + " 个问题没有选择类型", true); return; }
+      const instr = (q.instructions || "").trim();
+      if (!instr) { toast("问题「" + (q.label || "Q" + (i + 1)) + "」的 instructions 不能为空", true); return; }
+
+      let key = (q.label || "").trim() || ("Q" + (i + 1));
+      if (used[key]) { let n = 2; while (used[key + " (" + n + ")"]) n++; key = key + " (" + n + ")"; }
+      used[key] = true;
+      keyById[q.id] = key;
+
+      if (q.type === "noul") {
+        const item = { type: "noul", instructions: instr };
+        const t = (q.noulTrue || "").trim(), f = (q.noulFalse || "").trim();
+        if (t || f) { item.criteria = {}; if (t) item.criteria["true"] = t; if (f) item.criteria["false"] = f; }
+        map[key] = item;
+      } else if (q.type === "choice") {
+        const criteria = {};
+        let count = 0;
+        q.choice.forEach((o) => {
+          const nm = (o.name || "").trim();
+          if (!nm) return;
+          count++;
+          criteria[nm] = (o.desc || "").trim() ? (o.desc || "").trim() : null;
+        });
+        if (count < 2) { toast("问题「" + key + "」至少需要 2 个有效选项", true); return; }
+        if (count > MAX_CHOICE_OPTIONS) { toast("问题「" + key + "」最多 " + MAX_CHOICE_OPTIONS + " 个选项", true); return; }
+        map[key] = { type: "choice", instructions: instr, criteria: criteria };
+      } else {
+        const levels = q.score.map((s) => (s || "").trim()).filter(Boolean);
+        if (levels.length < MIN_LEVELS) { toast("问题「" + key + "」至少需要 " + MIN_LEVELS + " 个等级", true); return; }
+        map[key] = { type: "score", instructions: instr, criteria: levels };
+      }
+    }
+
+    const payload = { model: model, state: state, questions: map };
+    const orderedKeys = questions.map((q) => ({ id: q.id, key: keyById[q.id], label: (q.label || "").trim() || keyById[q.id], type: q.type }));
+
+    setLoading(true);
+    callApi(apiUrl, apiKey, payload)
+      .then((out) => {
+        renderRun(out.data, orderedKeys, model, payload, undefined, out.logId);
+        toast("Jev 已返回结果");
+      })
+      .catch((err) => {
+        renderError(err);
+        toast("请求失败：" + err.message, true);
+      })
+      .finally(() => setLoading(false));
+  }
+
+  function setLoading(on) {
+    el.runBtn.disabled = on;
+    el.runBtn.innerHTML = on
+      ? '<span class="spinner run-spinner"></span> 运行中…'
+      : '<span class="play">▶</span> 运行 Jev';
+  }
+
+  function callApi(apiUrl, apiKey, payload) {
+    const body = JSON.stringify(payload);
+    const headers = { "Content-Type": "application/json" };
+    let url;
+    if (proxyAvailable) {
+      url = "/api/systemone";
+      if (apiKey) headers["Authorization"] = "Bearer " + apiKey;
+      headers["X-Jev-Url"] = apiUrl;
+    } else {
+      url = apiUrl;
+      headers["Authorization"] = "Bearer " + apiKey;
+    }
+    return fetch(url, { method: "POST", headers: headers, body: body }).then((r) => {
+      return r.text().then((txt) => {
+        let data = null;
+        try { data = txt ? JSON.parse(txt) : null; } catch (e) {}
+        if (!r.ok) {
+          let msg = "HTTP " + r.status;
+          const picked = pickErrorMessage(data);
+          if (picked) msg += " · " + picked;
+          else if (txt) msg += " · " + txt.slice(0, 300);
+          const err = new Error(msg);
+          err.status = r.status;
+          err.data = data || txt;
+          throw err;
+        }
+        if (!data) throw new Error("返回内容不是合法 JSON");
+        let logId = null;
+        try { logId = r.headers.get("X-Jev-Log-Id"); } catch (e) {}
+        return { data: data, logId: logId };
+      });
+    }).catch((e) => {
+      if (e instanceof TypeError && !proxyAvailable) {
+        const err = new Error("浏览器直连被拦截（多为 CORS 限制）。请用仓库里的 server.py 启动页面，通过本地代理访问。");
+        err.cause = e;
+        throw err;
+      }
+      throw e;
+    });
+  }
+
+  function pickErrorMessage(d) {
+    if (!d) return "";
+    if (typeof d === "string") return d;
+    if (typeof d.detail === "string") return d.detail;
+    if (d.detail && typeof d.detail === "object") return d.detail.message || d.detail.error_type || JSON.stringify(d.detail);
+    if (d.error && typeof d.error === "object" && d.error.message) return d.error.message;
+    if (typeof d.error === "string") return d.error;
+    if (typeof d.message === "string") return d.message;
+    try { return JSON.stringify(d).slice(0, 400); } catch (e) { return ""; }
+  }
+
+  /* ============ results ============ */
+  /* ============ result list limit & full-width focus ============ */
+  const RESULT_LIMIT = LIMITS.resultLimit;
+  let showAllResults = false;
+  let focusedCard = null;
+
+  function applyResultLimit() {
+    const cards = [].slice.call(el.results.querySelectorAll(".result-card"));
+    let visible = 0;
+    cards.forEach((card, i) => {
+      const keep = showAllResults || i < RESULT_LIMIT || card.classList.contains("is-expanded");
+      card.classList.toggle("is-hidden", !keep);
+      if (keep) visible++;
+    });
+    // 隐藏没有任何可见卡片的分组
+    [].slice.call(el.results.querySelectorAll(".run")).forEach((run) => {
+      const all = [].slice.call(run.querySelectorAll(".result-card"));
+      if (!all.length) return;
+      run.classList.toggle("is-hidden", !all.some((c) => !c.classList.contains("is-hidden")));
+    });
+    updateResultFooter(cards.length, visible);
+    updateSelectionUI();
+  }
+
+  function updateResultFooter(total, visible) {
+    let bar = el.results.querySelector("#resultMore");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.id = "resultMore";
+      bar.className = "results-more";
+    }
+    el.results.appendChild(bar); // 始终置于列表末尾
+    if (total <= RESULT_LIMIT) { bar.classList.add("is-hidden"); bar.innerHTML = ""; return; }
+    bar.classList.remove("is-hidden");
+    if (showAllResults) {
+      bar.innerHTML = '<span>共 ' + total + ' 条结果</span>' +
+        '<button type="button" class="btn btn-sm" id="resultMoreBtn">只显示前 ' + RESULT_LIMIT + ' 条</button>';
+    } else {
+      const hidden = total - visible;
+      bar.innerHTML = '<span>已隐藏 ' + hidden + ' 条较早结果 · 共 ' + total + ' 条</span>' +
+        '<button type="button" class="btn btn-sm" id="resultMoreBtn">显示全部</button>';
+    }
+    const btn = bar.querySelector("#resultMoreBtn");
+    if (btn) btn.addEventListener("click", () => { showAllResults = !showAllResults; applyResultLimit(); });
+  }
+
+  function enterFocus(card) {
+    if (focusedCard && focusedCard !== card) focusedCard.classList.remove("is-expanded");
+    focusedCard = card;
+    card.classList.add("is-expanded", "open");
+    const ch = card.querySelector(".rc-chevron"); if (ch) ch.style.transform = "";
+    const main = document.querySelector("main"); if (main) main.classList.add("is-focus");
+    if (el.exitFocusBtn) el.exitFocusBtn.classList.remove("is-hidden");
+    card.scrollIntoView({ block: "nearest" });
+  }
+
+  function exitFocus() {
+    if (focusedCard) { focusedCard.classList.remove("is-expanded"); focusedCard = null; }
+    const main = document.querySelector("main"); if (main) main.classList.remove("is-focus");
+    if (el.exitFocusBtn) el.exitFocusBtn.classList.add("is-hidden");
+  }
+
+  if (el.exitFocusBtn) el.exitFocusBtn.addEventListener("click", exitFocus);
+
+  function buildRun(res, orderedKeys, modelUsed, snapshot, opts) {
+    opts = opts || {};
+    const answers = (res && res.answers) || {};
+    const usage = (res && res.usage) || {};
+    const runModel = (res && res.model) || modelUsed;
+
+    const run = document.createElement("div");
+    run.className = "run" + (opts.restored ? " restored" : "");
+
+    const time = opts.timeLabel || new Date().toLocaleTimeString("zh-CN", { hour12: false });
+    const usageTxt = (usage.input_tokens != null || usage.output_tokens != null)
+      ? " · " + (usage.input_tokens || 0) + " in / " + (usage.output_tokens || 0) + " out"
+      : "";
+
+    const head = document.createElement("div");
+    head.className = "run-head";
+    head.innerHTML =
+      '<label class="run-check" title="选择此记录"><input type="checkbox" class="run-select" /></label>' +
+      '<span class="run-meta">' + escapeHtml(time) + " · " + escapeHtml(runModel || "") + usageTxt + "</span>" +
+      '<span class="line"></span>' +
+      '<span class="run-actions">' +
+        '<button type="button" class="act act-load" title="载入该记录作为当前模板">载入</button>' +
+        '<button type="button" class="act act-download" title="下载此记录（JSON）">下载</button>' +
+        '<button type="button" class="act act-delete" title="删除此记录">删除</button>' +
+      "</span>";
+    run.appendChild(head);
+
+    // 本條运行的完整数据，供下载 / 载入 / 删除使用
+    run.__record = opts.record || {
+      id: opts.logId || null,
+      time: opts.timeLabel || new Date().toISOString(),
+      status: 200,
+      model: runModel,
+      model_requested: (snapshot && snapshot.model) || modelUsed,
+      state: snapshot ? snapshot.state : undefined,
+      questions: snapshot ? snapshot.questions : null,
+      answers: answers,
+      usage: usage
+    };
+    if (run.__record.id) run.dataset.logId = run.__record.id;
+
+    head.querySelector(".run-select").addEventListener("change", updateSelectionUI);
+    head.querySelector(".act-load").addEventListener("click", () => loadRecord(run));
+    head.querySelector(".act-download").addEventListener("click", () => downloadRecords([run]));
+    head.querySelector(".act-delete").addEventListener("click", () => deleteRecords([run]));
+
+    orderedKeys.forEach((k) => {
+      const ans = answers[k.key];
+      const card = document.createElement("div");
+      card.className = "result-card" + (opts.collapsed ? "" : " open");
+      card.appendChild(resultCardHead(k, ans));
+      const body = resultCardBody(k, ans);
+      body.appendChild(snapshotBlock(k, snapshot, runModel));
+      card.appendChild(body);
+      run.appendChild(card);
+    });
+
+    return run;
+  }
+
+  function renderRun(res, orderedKeys, modelUsed, snapshot, timeLabel, logId) {
+    // collapse every existing card
+    el.results.querySelectorAll(".result-card.open").forEach((c) => {
+      c.classList.remove("open");
+      const ch = c.querySelector(".rc-chevron"); if (ch) ch.style.transform = "";
+    });
+
+    // remove empty placeholder / previous errors
+    const empty = el.results.querySelector(".empty"); if (empty) empty.remove();
+
+    const run = buildRun(res, orderedKeys, modelUsed, snapshot, { timeLabel: timeLabel, logId: logId });
+    el.results.insertBefore(run, el.results.firstChild);
+    applyResultLimit();
+    updateSelectionUI();
+  }
+
+  /* ---------- 从本地记录（/api/logs）恢复历史运行 ---------- */
+  let historyLoaded = false;
+
+  function setRunOpen(run, open) {
+    [].slice.call(run.querySelectorAll(".result-card")).forEach((c) => {
+      c.classList.toggle("open", !!open);
+      const ch = c.querySelector(".rc-chevron"); if (ch) ch.style.transform = open ? "" : "rotate(-90deg)";
+    });
+  }
+
+  function formatLogTime(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleString("zh-CN", { hour12: false, month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+
+  function buildRunFromLog(entry) {
+    const questions = entry.questions || {};
+    const keys = Object.keys(questions);
+    if (!keys.length) return null;
+    const orderedKeys = keys.map((k) => ({ key: k, label: k, type: questions[k] && questions[k].type }));
+    const res = { model: entry.model, answers: entry.answers || {}, usage: entry.usage || {} };
+    const snapshot = { state: entry.state, model: entry.model_requested, questions: questions };
+    return buildRun(res, orderedKeys, entry.model || entry.model_requested, snapshot, {
+      restored: true,
+      collapsed: true,
+      timeLabel: formatLogTime(entry.time),
+      logId: entry.id,
+      record: entry
+    });
+  }
+
+  function loadHistory() {
+    if (!proxyAvailable || historyLoaded) return;
+    historyLoaded = true;
+    const limit = Math.max(1, Math.min(LIMITS.historyLimit || 100, 500));
+    fetch("/api/logs?limit=" + limit, { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        const entries = (data && Array.isArray(data.entries)) ? data.entries : [];
+        const usable = entries.filter((e) => e && e.answers && typeof e.answers === "object" &&
+          e.questions && Object.keys(e.questions).length &&
+          !(e.status != null && (e.status < 200 || e.status >= 300)));
+        if (!usable.length) return;
+        el.results.querySelectorAll(".run.restored").forEach((r) => r.remove());
+        const empty = el.results.querySelector(".empty"); if (empty) empty.remove();
+        // entries 是从旧到新；逐个插到 anchor 之前，使最新的居于最上
+        let anchor = el.results.querySelector("#resultMore");
+        usable.forEach((entry) => {
+          const run = buildRunFromLog(entry);
+          if (!run) return;
+          el.results.insertBefore(run, anchor);
+          anchor = run;
+        });
+        // 没有更新的实时运行时，展开最近一次
+        const hasLive = el.results.querySelector(".run:not(.restored)");
+        const restoredRuns = [].slice.call(el.results.querySelectorAll(".run.restored"));
+        restoredRuns.forEach((run, i) => setRunOpen(run, !hasLive && i === 0));
+        applyResultLimit();
+        updateSelectionUI();
+        toast("已从本地记录恢复 " + restoredRuns.length + " 次运行");
+      })
+      .catch((e) => { if (window.console) console.warn("load history failed:", e); });
+  }
+
+  /* ============ 记录的选择 / 删除 / 下载 / 载入 ============ */
+  function visibleRuns() {
+    return [].slice.call(el.results.querySelectorAll(".run")).filter(function (r) { return !r.classList.contains("is-hidden"); });
+  }
+
+  function selectedRuns() {
+    return visibleRuns().filter(function (r) {
+      const c = r.querySelector(".run-select");
+      return c && c.checked;
+    });
+  }
+
+  function updateSelectionUI() {
+    const runs = visibleRuns();
+    const checked = runs.filter(function (r) {
+      const c = r.querySelector(".run-select");
+      return c && c.checked;
+    }).length;
+    if (el.logSelected) el.logSelected.textContent = runs.length ? ("已选 " + checked + "/" + runs.length) : "已选 0/0";
+    if (el.selTools) el.selTools.classList.toggle("is-hidden", runs.length === 0);
+    if (el.selectAllRuns) {
+      el.selectAllRuns.checked = runs.length > 0 && checked === runs.length;
+      el.selectAllRuns.indeterminate = checked > 0 && checked < runs.length;
+      el.selectAllRuns.disabled = runs.length === 0;
+    }
+    if (el.downloadSelBtn) el.downloadSelBtn.disabled = checked === 0;
+    if (el.deleteSelBtn) el.deleteSelBtn.disabled = checked === 0;
+  }
+
+  function resetResultsEmpty() {
+    if (el.results.querySelector(".run")) return false;
+    exitFocus();
+    showAllResults = false;
+    el.results.innerHTML = '<div class="empty">运行后，每个问题会作为一个小方盒出现在这里。<br />最近一次的问题自动展开，历史问题自动收起。</div>';
+    updateSelectionUI();
+    return true;
+  }
+
+  function stamp() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + "-" + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+  }
+
+  function downloadRecords(runs) {
+    const recs = (runs || []).map(function (r) { return r && r.__record; }).filter(Boolean);
+    if (!recs.length) { toast("没有可下载的记录", true); return; }
+    let content, filename, mime;
+    if (recs.length === 1) {
+      content = JSON.stringify(recs[0], null, 2);
+      filename = "jev-run-" + (recs[0].id || stamp()) + ".json";
+      mime = "application/json";
+    } else {
+      content = recs.map(function (r) { return JSON.stringify(r); }).join("\n") + "\n";
+      filename = "run-log-" + stamp() + ".jsonl";
+      mime = "application/x-ndjson";
+    }
+    const blob = new Blob([content], { type: mime + ";charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+    toast("已下载 " + recs.length + " 条记录");
+  }
+
+  function deleteRecords(runs) {
+    runs = (runs || []).filter(Boolean);
+    if (!runs.length) return;
+    const ids = runs.map(function (r) { return r.__record && r.__record.id; }).filter(Boolean);
+    if (!ids.length) { toast("这些记录没有本地 id，无法删除（可能不是通过本地代理运行）", true); return; }
+    const n = runs.length;
+    askConfirm("删除运行记录",
+      "将从本地记录文件（run-log.jsonl）中永久删除选中的 " + n + " 条记录，此操作无法撤销。",
+      "删除 " + n + " 条"
+    ).then(function (ok) {
+      if (!ok) return;
+      fetch("/api/logs/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: ids })
+      })
+        .then(function (r) {
+          return r.json().catch(function () { return null; }).then(function (d) {
+            if (!r.ok) throw new Error(pickErrorMessage(d) || ("HTTP " + r.status));
+            return d || {};
+          });
+        })
+        .then(function (d) {
+          runs.forEach(function (r) { r.remove(); });
+          if (!resetResultsEmpty()) { applyResultLimit(); updateSelectionUI(); }
+          toast("已删除 " + (typeof d.deleted === "number" ? d.deleted : n) + " 条记录");
+        })
+        .catch(function (e) { toast("删除失败：" + e.message, true); });
+    });
+  }
+
+  function entryToText(v) {
+    if (v == null) return "";
+    if (typeof v === "string") return v;
+    try { return JSON.stringify(v, null, 2); } catch (e) { return String(v); }
+  }
+
+  function applyRecordAsTemplate(rec) {
+    if (rec.model_requested) el.model.value = rec.model_requested;
+
+    const st = rec.state;
+    if (typeof st === "string") { setStateMode("text"); el.stateInput.value = st; }
+    else if (st != null) { setStateMode("json"); el.stateInput.value = entryToText(st); }
+    else { setStateMode("text"); el.stateInput.value = ""; }
+    updateStateCounter();
+
+    questions = [];
+    qseq = 0;
+    const qmap = rec.questions || {};
+    Object.keys(qmap).forEach(function (key, idx) {
+      const def = qmap[key] || {};
+      qseq += 1;
+      const q = {
+        id: "id_" + qseq,
+        label: key || ("Q" + (idx + 1)),
+        type: def.type || "noul",
+        instructions: entryToText(def.instructions),
+        choice: [ { name: "", desc: "" }, { name: "", desc: "" } ],
+        score: ["", ""],
+        noulTrue: "",
+        noulFalse: "",
+        open: true
+      };
+      if (q.type === "choice" && def.criteria && typeof def.criteria === "object") {
+        const opts = Object.keys(def.criteria).map(function (nm) { return { name: nm, desc: entryToText(def.criteria[nm]) }; });
+        if (opts.length) q.choice = opts;
+        while (q.choice.length < 2) q.choice.push({ name: "", desc: "" });
+      }
+      if (q.type === "score") {
+        const levels = Array.isArray(def.criteria) ? def.criteria.map(entryToText) : [];
+        if (levels.length) q.score = levels;
+        while (q.score.length < MIN_LEVELS) q.score.push("");
+      }
+      if (q.type === "noul" && def.criteria) {
+        q.noulTrue = entryToText(def.criteria["true"]);
+        q.noulFalse = entryToText(def.criteria["false"]);
+      }
+      questions.push(q);
+    });
+
+    if (!questions.length) { toast("该记录没有可载入的问题", true); return; }
+    renderQuestions();
+    exitFocus();
+    try { el.stateInput.scrollIntoView({ block: "nearest" }); } catch (e) {}
+    toast("已载入为当前模板（" + questions.length + " 个问题）");
+  }
+
+  function loadRecord(run) {
+    const rec = run && run.__record;
+    if (!rec) { toast("该记录没有可载入的信息", true); return; }
+    const hasContent = (el.stateInput.value || "").trim() !== "" || questions.length > 0;
+    if (hasContent) {
+      askConfirm("载入为模板",
+        "当前编辑区已有内容。载入该记录会用它的 State 与 Questions 覆盖现有内容（未保存的修改会丢失），是否继续？",
+        "覆盖并载入"
+      ).then(function (ok) { if (ok) applyRecordAsTemplate(rec); });
+    } else {
+      applyRecordAsTemplate(rec);
+    }
+  }
+
+  /* ---------- 确认弹窗 ---------- */
+  let modalResolve = null;
+  function askConfirm(title, message, confirmText) {
+    return new Promise(function (resolve) {
+      modalResolve = resolve;
+      if (el.modalTitle) el.modalTitle.textContent = title || "确认";
+      if (el.modalMsg) el.modalMsg.textContent = message || "";
+      if (el.modalOk) el.modalOk.textContent = confirmText || "确定";
+      if (el.modal) el.modal.classList.remove("is-hidden");
+      try { if (el.modalOk) el.modalOk.focus(); } catch (e) {}
+    });
+  }
+  function closeModal(result) {
+    if (el.modal) el.modal.classList.add("is-hidden");
+    const r = modalResolve; modalResolve = null;
+    if (r) r(result);
+  }
+  if (el.modalOk) el.modalOk.addEventListener("click", function () { closeModal(true); });
+  if (el.modalCancel) el.modalCancel.addEventListener("click", function () { closeModal(false); });
+  if (el.modal) el.modal.addEventListener("click", function (e) { if (e.target === el.modal) closeModal(false); });
+
+  /* ---------- 工具栏 ---------- */
+  if (el.selectAllRuns) el.selectAllRuns.addEventListener("change", function () {
+    const on = el.selectAllRuns.checked;
+    visibleRuns().forEach(function (r) { const c = r.querySelector(".run-select"); if (c) c.checked = on; });
+    updateSelectionUI();
+  });
+  if (el.downloadSelBtn) el.downloadSelBtn.addEventListener("click", function () { downloadRecords(selectedRuns()); });
+  if (el.deleteSelBtn) el.deleteSelBtn.addEventListener("click", function () { deleteRecords(selectedRuns()); });
+
+  function resultCardHead(k, ans) {
+    const head = document.createElement("button");
+    head.type = "button";
+    head.className = "rc-head";
+    const meta = TYPE_META[k.type] || { label: k.type || "?", badge: "badge-noul" };
+    let summary = "—";
+    if (ans && ans.type === "noul") summary = "是 <b>" + pct(ans.noul) + "</b>";
+    else if (ans && ans.type === "choice") summary = "→ <b>" + escapeHtml(String(ans.choice)) + "</b>";
+    else if (ans && ans.type === "score") summary = "得分 <b>" + fmt(ans.score, 2) + "</b>";
+    else if (!ans) summary = "<b>无返回</b>";
+    head.innerHTML =
+      '<span class="rc-label">' + escapeHtml(k.label) + '</span>' +
+      '<span class="badge ' + meta.badge + '">' + meta.label + '</span>' +
+      '<span class="rc-summary">' + summary + '</span>' +
+      '<span class="rc-expand" title="展开为全宽" role="button" tabindex="0">⛶</span>' +
+      '<span class="rc-chevron">▾</span>';
+    const expandBtn = head.querySelector(".rc-expand");
+    const toggleExpand = (e) => {
+      if (e) e.stopPropagation();
+      const card = head.parentElement;
+      if (card.classList.contains("is-expanded")) exitFocus();
+      else enterFocus(card);
+    };
+    expandBtn.addEventListener("click", toggleExpand);
+    expandBtn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") toggleExpand(e); });
+    head.addEventListener("click", () => {
+      const card = head.parentElement;
+      card.classList.toggle("open");
+      const open = card.classList.contains("open");
+      head.querySelector(".rc-chevron").style.transform = open ? "" : "rotate(-90deg)";
+      if (!open && card.classList.contains("is-expanded")) exitFocus();
+    });
+    return head;
+  }
+
+  function snapshotBlock(k, snapshot, model) {
+    const det = document.createElement("details");
+    det.className = "rc-snapshot";
+    const summary = document.createElement("summary");
+    summary.textContent = "查看当时的材料和标准";
+    det.appendChild(summary);
+
+    const questionsMap = (snapshot && snapshot.questions) || {};
+    const qdef = questionsMap[k.key] || null;
+
+    det.appendChild(snapHeading("1 · 要检查的材料"));
+    det.appendChild(snapBody(formatEntry(snapshot ? snapshot.state : undefined)));
+
+    if (qdef) {
+      det.appendChild(snapHeading("2 · 问题（instructions）"));
+      det.appendChild(snapBody(formatEntry(qdef.instructions)));
+
+      if (qdef.type === "noul" && qdef.criteria) {
+        if (qdef.criteria["true"] != null) {
+          det.appendChild(snapHeading("什么情况下算「是」？"));
+          det.appendChild(snapBody(formatEntry(qdef.criteria["true"])));
+        }
+        if (qdef.criteria["false"] != null) {
+          det.appendChild(snapHeading("什么情况下算「否」？"));
+          det.appendChild(snapBody(formatEntry(qdef.criteria["false"])));
+        }
+      } else if (qdef.type === "choice" && qdef.criteria) {
+        det.appendChild(snapHeading("选项标准（criteria）"));
+        const ul = document.createElement("ul");
+        ul.className = "snap-list";
+        Object.keys(qdef.criteria).forEach((name) => {
+          const li = document.createElement("li");
+          const desc = qdef.criteria[name];
+          li.textContent = name + (desc != null && desc !== "" ? " —— " + formatEntry(desc) : "");
+          ul.appendChild(li);
+        });
+        det.appendChild(ul);
+      } else if (qdef.type === "score" && Array.isArray(qdef.criteria)) {
+        det.appendChild(snapHeading("评分等级（从低到高）"));
+        const ol = document.createElement("ol");
+        ol.className = "snap-list";
+        qdef.criteria.forEach((lv) => {
+          const li = document.createElement("li");
+          li.textContent = formatEntry(lv);
+          ol.appendChild(li);
+        });
+        det.appendChild(ol);
+      }
+    }
+
+    const cap = document.createElement("p");
+    cap.className = "snap-caption";
+    cap.textContent = model || "";
+    det.appendChild(cap);
+    return det;
+  }
+
+  function snapHeading(text) {
+    const h = document.createElement("h5");
+    h.className = "snap-heading";
+    h.textContent = text;
+    return h;
+  }
+
+  function snapBody(text) {
+    const p = document.createElement("p");
+    p.className = "snap-body";
+    p.textContent = text;
+    return p;
+  }
+
+  function formatEntry(v) {
+    if (v == null) return "";
+    if (typeof v === "string") return v;
+    try { return JSON.stringify(v, null, 2); } catch (e) { return String(v); }
+  }
+
+  function resultCardBody(k, ans) {
+    const body = document.createElement("div");
+    body.className = "rc-body";
+    if (!ans) {
+      body.innerHTML = "<div class='hint'>本次返回中没有该问题的答案。</div>";
+      return body;
+    }
+
+    if (ans.type === "noul") {
+      const p = clamp01(ans.noul);
+      body.appendChild(barRow("是 (Yes)", p, true));
+      body.appendChild(barRow("否 (No)", 1 - p, false));
+      const foot = document.createElement("div");
+      foot.className = "rc-foot";
+      foot.innerHTML = '<span class="chip mint big">P(是) = ' + pct(p) + '</span>' +
+                       '<span class="rc-note">noul · 0–1</span>';
+      body.appendChild(foot);
+      return body;
+    }
+
+    if (ans.type === "choice") {
+      const probs = ans.probabilities || {};
+      const entries = Object.keys(probs).map((key) => ({ key: key, v: Number(probs[key]) || 0 }));
+      entries.sort((a, b) => b.v - a.v);
+      entries.forEach((e) => body.appendChild(barRow(e.key, e.v, e.key === ans.choice, e.key === ans.choice)));
+      const foot = document.createElement("div");
+      foot.className = "rc-foot";
+      foot.appendChild(chip("选择：" + ans.choice, "mint big"));
+      if (ans.confidence != null) foot.appendChild(chip("置信度 " + pct(ans.confidence)));
+      body.appendChild(foot);
+      return body;
+    }
+
+    if (ans.type === "score") {
+      const probs = ans.probabilities || {};
+      const legend = ans.legend || {};
+      const keys = Object.keys(legend).length ? Object.keys(legend) : Object.keys(probs);
+      keys.forEach((key) => {
+        const desc = legend[key] != null ? String(legend[key]) : key;
+        body.appendChild(barRow(key + " · " + desc, Number(probs[key]) || 0, false));
+      });
+      const foot = document.createElement("div");
+      foot.className = "rc-foot";
+      foot.appendChild(chip("加权得分 " + fmt(ans.score, 2), "mint big"));
+      if (ans.confidence != null) foot.appendChild(chip("置信度 " + pct(ans.confidence)));
+      body.appendChild(foot);
+      return body;
+    }
+
+    // unknown shape: pretty print
+    const pre = document.createElement("pre");
+    pre.style.cssText = "white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px;margin:0";
+    pre.textContent = JSON.stringify(ans, null, 2);
+    body.appendChild(pre);
+    return body;
+  }
+
+  function barRow(label, value, chosen, showTag) {
+    const v = clamp01(value);
+    const row = document.createElement("div");
+    row.className = "bar-row" + (chosen ? " is-chosen" : "");
+    const top = document.createElement("div");
+    top.className = "bar-top";
+    const key = document.createElement("span");
+    key.className = "bar-key";
+    key.textContent = label;
+    if (showTag) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "选定"; key.appendChild(tag); }
+    const val = document.createElement("span");
+    val.className = "bar-val";
+    val.textContent = pct(v);
+    top.appendChild(key); top.appendChild(val);
+    const track = document.createElement("div");
+    track.className = "bar-track";
+    const fill = document.createElement("div");
+    fill.className = "bar-fill";
+    fill.style.width = "0%";
+    track.appendChild(fill);
+    row.appendChild(top); row.appendChild(track);
+    requestAnimationFrame(() => { fill.style.width = (v * 100).toFixed(2) + "%"; });
+    return row;
+  }
+
+  function chip(text, cls) {
+    const c = document.createElement("span");
+    c.className = "chip" + (cls ? " " + cls : "");
+    c.textContent = text;
+    return c;
+  }
+
+  function renderError(err) {
+    const empty = el.results.querySelector(".empty"); if (empty) empty.remove();
+    const box = document.createElement("div");
+    box.className = "result-error";
+    const hint = (!proxyAvailable)
+      ? "提示：当前是直连模式，浏览器常因 CORS 被拒绝。请运行 server.py 后访问 http://localhost:8000 再试。"
+      : "请检查 API Key、模型名与请求内容。";
+    let detail = err && err.data ? (typeof err.data === "string" ? err.data : JSON.stringify(err.data, null, 2)) : "";
+    box.innerHTML = "<b>请求失败" + (err && err.status ? "（" + err.status + "）" : "") + "</b>" +
+      escapeHtml(err && err.message ? err.message : String(err)) +
+      '<div class="hint" style="color:var(--err-fg)">' + escapeHtml(hint) + "</div>" +
+      (detail ? "<pre>" + escapeHtml(detail).slice(0, 1200) + "</pre>" : "");
+    el.results.insertBefore(box, el.results.firstChild);
+  }
+
+  /* ============ helpers ============ */
+  function clamp01(x) { const n = Number(x); if (!isFinite(n)) return 0; return Math.max(0, Math.min(1, n)); }
+  function pct(x) { return (clamp01(x) * 100).toFixed(1) + "%"; }
+  function fmt(x, d) { const n = Number(x); return isFinite(n) ? n.toFixed(d) : "—"; }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  updateQCount();
+})();
+</script>
+</body>
+</html>

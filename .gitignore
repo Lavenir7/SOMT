@@ -1,0 +1,13 @@
+*.apikey
+
+run-log.jsonl
+
+__pycache__/
+*.pyc
+.shots/
+_theme_*.html
+_test_*.html
+_histtest.html
+_seltest.html
+_dlcheck.html
+_shot*.html
