@@ -140,9 +140,9 @@ def resolve_api_key(header_auth: str):
 def mask_key(key):
     if not key:
         return None
-    if len(key) <= 6:
+    if len(key) <= 10:
         return "…"
-    return "…" + key[-4:]
+    return key[:6] + "..." + key[-4:]
 
 
 def is_loopback(addr: str) -> bool:

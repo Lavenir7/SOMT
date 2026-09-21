@@ -134,11 +134,12 @@
     text-transform:uppercase;letter-spacing:.06em;padding-left:2px;
   }
   .field-ctl.url{flex:1 1 300px}
-  .field-ctl.model{flex:0 1 160px}
+  .field-ctl.model{flex:0 1 208px}
   .field-ctl.key{flex:1 1 240px}
   .key-row{display:flex;gap:8px;align-items:center}
   .key-row input{flex:1;min-width:0}
-  .key-src{font-size:10px;font-weight:600;color:var(--badge-noul-fg);text-transform:none;letter-spacing:0;margin-left:2px}
+  .key-src{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;margin-left:4px;vertical-align:middle}
+  .key-src .chip{font-size:10px;padding:2px 7px}
   input[type=text],input[type=password],textarea{
     width:100%;font-size:13px;color:var(--ink);background:var(--white);
     border:1px solid var(--line);border-radius:10px;padding:8px 11px;outline:none;
@@ -168,6 +169,8 @@
     box-shadow:0 6px 16px rgba(23,21,31,.18);
   }
   .btn-primary:hover{background:var(--btn-primary-bg-hover);border-color:var(--btn-primary-bg-hover)}
+  #runBtn:not(:disabled):hover{background:var(--mint);border-color:var(--mint);color:#04211c;box-shadow:0 6px 18px rgba(0,191,166,.35)}
+  #runBtn:not(:disabled):active{background:var(--mint-deep);border-color:var(--mint-deep)}
   .btn-primary .play{display:inline-block;transform:translateY(.5px)}
   .btn-mint{background:var(--mint);border-color:var(--mint);color:#04211c}
   .btn-mint:hover{background:var(--mint-deep);border-color:var(--mint-deep)}
@@ -368,6 +371,17 @@
   .bar-row.is-chosen .bar-fill{background:linear-gradient(90deg,var(--bar-chosen-a),var(--mint-deep))}
   .bar-row.is-chosen .bar-val{color:var(--ink)}
   .bar-row.is-chosen .bar-key{color:var(--ink)}
+  /* 评分：次高项用更暗的绿色 */
+  .bar-row.is-chosen.is-second .bar-fill{filter:brightness(.76) saturate(.85)}
+  .bar-row.is-chosen.is-second .bar-val{color:var(--muted)}
+
+  /* 是非：单条概率条（左「是」→ 右「否」） */
+  .noul-bar{display:flex;flex-direction:column;gap:6px}
+  .noul-axis{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .noul-axis .noul-side{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--muted);transition:color .2s}
+  .noul-axis .noul-side.is-winner{color:var(--badge-noul-fg)}
+  /* 与评分/选择一致的填充条：P(是) ≥ 50% 高亮 */
+  .noul-fill.is-highlight{background:linear-gradient(90deg,var(--bar-chosen-a),var(--mint-deep))}
 
   .rc-foot{
     display:flex;align-items:center;gap:8px;flex-wrap:wrap;
@@ -380,7 +394,6 @@
   }
   .chip.mint{background:var(--mint-pale);border-color:var(--mint-line);color:var(--badge-noul-fg)}
   .chip.big{font-size:12px;padding:4px 11px}
-  .rc-note{margin-left:auto;font-size:10.5px;color:var(--muted)}
 
   .rc-snapshot{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
   .rc-snapshot > summary{
@@ -472,10 +485,7 @@
       </div>
       <div class="field-ctl model">
         <label for="model">Model</label>
-        <input id="model" type="text" spellcheck="false" list="modelList" value="jev-latest" />
-        <datalist id="modelList">
-          <option value="jev-latest"></option>
-        </datalist>
+        <input id="model" type="text" spellcheck="false" value="jev-latest" />
       </div>
       <div class="field-ctl key">
         <label for="apiKey">API Key <span class="key-src" id="keySource"></span></label>
@@ -493,7 +503,7 @@
         <button type="button" data-theme="system" title="跟随系统">跟随</button>
       </div>
       <div class="status" id="proxyStatus"><span class="dot"></span><span id="proxyText">检测中…</span></div>
-      <button class="btn btn-primary" id="runBtn"><span class="play">▶</span> 运行 Jev</button>
+      <button class="btn btn-primary" id="runBtn"><span class="play">▶</span> 运行</button>
     </div>
   </header>
 
@@ -657,7 +667,10 @@
     if (serverKey.hasKey) {
       const where = serverKey.source === "file" ? "文件" : (serverKey.source === "env" ? "环境变量" : "服务端");
       el.apiKey.placeholder = "已自动读取，留空即使用";
-      el.keySource.textContent = (serverKey.keyHint || "") + " · " + where;
+      const hint = serverKey.keyHint || "";
+      el.keySource.innerHTML =
+        (hint ? '<span class="chip mint">' + escapeHtml(hint) + '</span>' : "") +
+        '<span class="chip">' + escapeHtml(where) + '</span>';
     } else {
       el.apiKey.placeholder = proxyAvailable ? "粘贴你的 API Key…（可保存到本地文件）" : "粘贴你的 API Key…";
       el.keySource.textContent = "";
@@ -861,9 +874,9 @@
     ta.maxLength = MAX_INSTR;
     ta.spellcheck = false;
     ta.placeholder = {
-      noul: "例如：这段文字是否表达了紧急情绪？",
+      noul: "例如：这段文字是否为 AI 生成？",
       choice: "例如：这条消息应该由哪个团队处理？",
-      score: "例如：这篇文案的清晰度如何？"
+      score: "例如：当前状态的优先级如何？"
     }[q.type];
     ta.value = q.instructions;
     const ctr = f.querySelector(".q-instr-counter");
@@ -1093,7 +1106,7 @@
     el.runBtn.disabled = on;
     el.runBtn.innerHTML = on
       ? '<span class="spinner run-spinner"></span> 运行中…'
-      : '<span class="play">▶</span> 运行 Jev';
+      : '<span class="play">▶</span> 运行';
   }
 
   function callApi(apiUrl, apiKey, payload) {
@@ -1557,7 +1570,12 @@
     head.className = "rc-head";
     const meta = TYPE_META[k.type] || { label: k.type || "?", badge: "badge-noul" };
     let summary = "—";
-    if (ans && ans.type === "noul") summary = "是 <b>" + pct(ans.noul) + "</b>";
+    if (ans && ans.type === "noul") {
+      // 展示概率更大的一侧；完全相等时展示「是」
+      const p = clamp01(ans.noul);
+      const yesWins = p >= (1 - p) - 1e-9;
+      summary = (yesWins ? "是 <b>" + pct(p) + "</b>" : "否 <b>" + pct(1 - p) + "</b>");
+    }
     else if (ans && ans.type === "choice") summary = "→ <b>" + escapeHtml(String(ans.choice)) + "</b>";
     else if (ans && ans.type === "score") summary = "得分 <b>" + fmt(ans.score, 2) + "</b>";
     else if (!ans) summary = "<b>无返回</b>";
@@ -1673,15 +1691,51 @@
 
     if (ans.type === "noul") {
       const p = clamp01(ans.noul);
-      // 概率大的用绿色进度条，小的用灰色；完全相等时两条都为灰色
-      const yesWins = p > (1 - p) + 1e-9;
       const noWins = (1 - p) > p + 1e-9;
-      body.appendChild(barRow("是 (Yes)", p, yesWins));
-      body.appendChild(barRow("否 (No)", 1 - p, noWins));
+      const topYes = p >= (1 - p) - 1e-9;
+
+      const wrap = document.createElement("div");
+      wrap.className = "noul-bar";
+
+      // 左端「是」，右端「否」；概率以气泡显示，概率大的一侧字高亮
+      const axis = document.createElement("div");
+      axis.className = "noul-axis";
+      const yes = document.createElement("span");
+      yes.className = "noul-side noul-yes" + (topYes ? " is-winner" : "");
+      const yesName = document.createElement("span");
+      yesName.className = "noul-name";
+      yesName.textContent = "是";
+      yes.appendChild(yesName);
+      yes.appendChild(chip(pct(p), topYes ? "mint" : ""));
+      const no = document.createElement("span");
+      no.className = "noul-side noul-no" + (noWins ? " is-winner" : "");
+      const noName = document.createElement("span");
+      noName.className = "noul-name";
+      noName.textContent = "否";
+      no.appendChild(chip(pct(1 - p), noWins ? "mint" : "")); // 「否」的概率气泡在字的左侧
+      no.appendChild(noName);
+      axis.appendChild(yes);
+      axis.appendChild(no);
+
+      // 单条：与评分/选择一致的条样式；P(是) ≥ 50% 高亮，否则暗色
+      const track = document.createElement("div");
+      track.className = "bar-track";
+      const fill = document.createElement("div");
+      fill.className = "bar-fill noul-fill" + (topYes ? " is-highlight" : "");
+      fill.style.width = "0%";
+      track.appendChild(fill);
+
+      wrap.appendChild(axis);
+      wrap.appendChild(track);
+      body.appendChild(wrap);
+
+      requestAnimationFrame(() => { fill.style.width = (p * 100).toFixed(2) + "%"; });
+
+      const conf = ans.confidence != null ? clamp01(ans.confidence) : Math.max(p, 1 - p);
       const foot = document.createElement("div");
       foot.className = "rc-foot";
-      foot.innerHTML = '<span class="chip mint big">P(是) = ' + pct(p) + '</span>' +
-                       '<span class="rc-note">noul · 0–1</span>';
+      foot.appendChild(chip(topYes ? "是" : "否", "mint big"));
+      foot.appendChild(chip("置信度 " + pct(conf)));
       body.appendChild(foot);
       return body;
     }
@@ -1703,9 +1757,15 @@
       const probs = ans.probabilities || {};
       const legend = ans.legend || {};
       const keys = Object.keys(legend).length ? Object.keys(legend) : Object.keys(probs);
+      // 概率最高的两项高亮，其中较低的一项颜色更暗
+      const ranked = keys.slice().sort((a, b) => (Number(probs[b]) || 0) - (Number(probs[a]) || 0));
+      const top = ranked[0];
+      const second = ranked[1];
       keys.forEach((key) => {
         const desc = legend[key] != null ? String(legend[key]) : key;
-        body.appendChild(barRow(key + " · " + desc, Number(probs[key]) || 0, false));
+        const isTop = key === top;
+        const isSecond = !isTop && key === second;
+        body.appendChild(barRow(key + " · " + desc, Number(probs[key]) || 0, isTop || isSecond, false, isSecond));
       });
       const foot = document.createElement("div");
       foot.className = "rc-foot";
@@ -1723,10 +1783,10 @@
     return body;
   }
 
-  function barRow(label, value, chosen, showTag) {
+  function barRow(label, value, chosen, showTag, dim) {
     const v = clamp01(value);
     const row = document.createElement("div");
-    row.className = "bar-row" + (chosen ? " is-chosen" : "");
+    row.className = "bar-row" + (chosen ? " is-chosen" : "") + (chosen && dim ? " is-second" : "");
     const top = document.createElement("div");
     top.className = "bar-top";
     const key = document.createElement("span");

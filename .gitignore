@@ -11,3 +11,8 @@ _histtest.html
 _seltest.html
 _dlcheck.html
 _shot*.html
+
+logs/
+enable_*
+disable_*
+process.id
