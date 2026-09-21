@@ -184,11 +184,19 @@
 
   /* ---------- layout ---------- */
   main{
-    flex:1 1 auto;min-height:0;display:grid;gap:18px;padding:18px 20px;
-    grid-template-columns:minmax(0,7fr) minmax(0,3fr);
+    flex:1 1 auto;min-height:0;display:grid;padding:18px 20px;
+    grid-template-columns:minmax(0,var(--left-w,70%)) 18px minmax(0,1fr);
+    column-gap:0;row-gap:18px;
   }
-  main.is-focus{grid-template-columns:minmax(0,1fr)}
-  main.is-focus .left{display:none}
+  /* 左右分栏拖拽分隔条 */
+  .splitter{position:relative;cursor:col-resize;align-self:stretch;touch-action:none}
+  .splitter::before{
+    content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;transform:translateX(-50%);
+    border-radius:2px;background:transparent;transition:background .15s;
+  }
+  .splitter:hover::before,.splitter.is-dragging::before{background:var(--muted)}
+  body.is-resizing{user-select:none;cursor:col-resize}
+  body.is-resizing .splitter::before{background:var(--muted)}
   .left,.right{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:4px}
   .left::-webkit-scrollbar,.right::-webkit-scrollbar{width:9px}
   .left::-webkit-scrollbar-thumb,.right::-webkit-scrollbar-thumb{
@@ -334,8 +342,6 @@
     margin-bottom:10px;overflow:hidden;transition:border-color .15s,box-shadow .15s;
   }
   .result-card.open{border-color:var(--card-focus);box-shadow:var(--shadow)}
-  .result-card.is-expanded{border-color:var(--mint);box-shadow:0 14px 44px rgba(23,21,31,.14)}
-  :root[data-theme="dark"] .result-card.is-expanded{box-shadow:0 14px 44px rgba(0,0,0,.55)}
   .rc-head{
     display:flex;align-items:center;gap:8px;width:100%;border:none;background:transparent;
     padding:10px 12px;cursor:pointer;text-align:left;color:inherit;
@@ -347,12 +353,6 @@
     max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .rc-summary b{color:var(--ink)}
-  .rc-expand{
-    flex:0 0 auto;width:24px;height:24px;display:grid;place-items:center;border-radius:7px;
-    color:var(--muted);font-size:12px;cursor:pointer;line-height:1;
-  }
-  .rc-expand:hover{background:var(--line-soft);color:var(--ink)}
-  .result-card.is-expanded .rc-expand{background:var(--mint-pale);color:var(--badge-noul-fg)}
   .rc-chevron{color:var(--muted);font-size:12px;transition:transform .2s;flex:0 0 auto}
   .result-card.open .rc-chevron{transform:rotate(180deg)}
   .result-card:not(.open) .rc-body{display:none}
@@ -467,6 +467,7 @@
   @media (max-width:1040px){
     body{overflow:auto;overflow-x:hidden;height:auto}
     main{grid-template-columns:minmax(0,1fr);height:auto}
+    .splitter{display:none}
     .left,.right{overflow:visible;min-width:0}
     .type-options{grid-template-columns:1fr}
     .opt-row{flex-wrap:wrap}
@@ -494,8 +495,7 @@
     .panel{padding:12px;margin-bottom:12px}
     .panel-head{gap:8px;margin-bottom:10px}
 
-    /* 单列布局下全宽展开无意义，隐藏展开按钮以留出标题空间 */
-    .rc-expand{display:none}
+    /* 单列布局：结果卡片标题收紧 */
     .rc-head{padding:9px 10px;gap:7px}
     .rc-label{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
     .rc-head .badge{flex:0 0 auto}
@@ -589,13 +589,14 @@
       </div>
     </section>
 
+    <div class="splitter" id="splitter" role="separator" aria-orientation="vertical" tabindex="0" title="拖动调节（双击恢复默认）"></div>
+
     <!-- ================= RIGHT ================= -->
     <aside class="right">
       <div class="panel">
         <div class="panel-head">
           <div class="panel-title">结果<span class="en">answers</span></div>
           <div class="spacer"></div>
-          <button class="btn btn-sm btn-ghost is-hidden" id="exitFocusBtn">退出全宽</button>
           <span class="sel-tools is-hidden" id="selTools">
             <label class="log-select-all" title="选择全部记录">
               <input type="checkbox" id="selectAllRuns" /> 全选
@@ -606,7 +607,7 @@
           </span>
         </div>
         <div id="results">
-          <div class="empty">暂无结果<br /><br />运行 Jev 以获得结果</div>
+          <div class="empty">暂无记录</div>
         </div>
       </div>
     </aside>
@@ -665,7 +666,7 @@
     stateMode: $("stateMode"),
     qList: $("qList"), qEmpty: $("qEmpty"), qCount: $("qCount"), addQBtn: $("addQBtn"),
     results: $("results"), runBtn: $("runBtn"),
-    exitFocusBtn: $("exitFocusBtn"),
+    splitter: $("splitter"),
     proxyStatus: $("proxyStatus"), proxyText: $("proxyText"),
     themeSeg: $("themeSeg"),
     saveKeyBtn: $("saveKeyBtn"), keySource: $("keySource"),
@@ -722,6 +723,67 @@
     });
   }
   window.addEventListener("resize", applyTopbarCollapse);
+
+  /* ============ 左右分栏拖拽 ============ */
+  (function initSplitter() {
+    const main = document.querySelector("main");
+    const splitter = el.splitter;
+    if (!main || !splitter) return;
+
+    const KEY = "jev.splitFrac";
+    const MIN = 0.22, MAX = 0.82;
+    let frac = 0.7;
+    try {
+      const s = parseFloat(localStorage.getItem(KEY));
+      if (isFinite(s) && s >= MIN && s <= MAX) frac = s;
+    } catch (e) {}
+
+    const apply = (persist) => {
+      main.style.setProperty("--left-w", (frac * 100).toFixed(2) + "%");
+      if (persist) { try { localStorage.setItem(KEY, String(frac)); } catch (e) {} }
+    };
+    const setFrac = (f, persist) => { frac = Math.max(MIN, Math.min(MAX, f)); apply(persist); };
+    const contentWidth = () => {
+      const rect = main.getBoundingClientRect();
+      const cs = window.getComputedStyle(main);
+      return rect.width - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    };
+    apply(false);
+
+    let dragging = false, startX = 0, startFrac = frac;
+    splitter.addEventListener("pointerdown", (e) => {
+      if (window.matchMedia("(max-width: 1040px)").matches) return;
+      dragging = true;
+      startX = e.clientX;
+      startFrac = frac;
+      splitter.classList.add("is-dragging");
+      document.body.classList.add("is-resizing");
+      try { splitter.setPointerCapture(e.pointerId); } catch (err) {}
+      e.preventDefault();
+    });
+    splitter.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      const w = contentWidth();
+      if (w <= 0) return;
+      setFrac(startFrac + (e.clientX - startX) / w, false);
+    });
+    const stop = () => {
+      if (!dragging) return;
+      dragging = false;
+      splitter.classList.remove("is-dragging");
+      document.body.classList.remove("is-resizing");
+      try { localStorage.setItem(KEY, String(frac)); } catch (e) {}
+    };
+    splitter.addEventListener("pointerup", stop);
+    splitter.addEventListener("pointercancel", stop);
+    splitter.addEventListener("dblclick", () => setFrac(0.7, true));
+    splitter.addEventListener("keydown", (e) => {
+      const step = (e.shiftKey ? 0.05 : 0.01);
+      if (e.key === "ArrowLeft") { e.preventDefault(); setFrac(frac - step, true); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); setFrac(frac + step, true); }
+      else if (e.key === "Home") { e.preventDefault(); setFrac(0.7, true); }
+    });
+  })();
 
   /* ============ config persistence (key is intentionally not stored) ============ */
   try {
@@ -1111,7 +1173,6 @@
   document.addEventListener("keydown", (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); run(); }
     else if (e.key === "Escape" && el.modal && !el.modal.classList.contains("is-hidden")) closeModal(false);
-    else if (e.key === "Escape" && focusedCard) exitFocus();
   });
 
   function run() {
@@ -1261,16 +1322,15 @@
   }
 
   /* ============ results ============ */
-  /* ============ result list limit & full-width focus ============ */
+  /* ============ result list limit ============ */
   const RESULT_LIMIT = LIMITS.resultLimit;
   let showAllResults = false;
-  let focusedCard = null;
 
   function applyResultLimit() {
     const cards = [].slice.call(el.results.querySelectorAll(".result-card"));
     let visible = 0;
     cards.forEach((card, i) => {
-      const keep = showAllResults || i < RESULT_LIMIT || card.classList.contains("is-expanded");
+      const keep = showAllResults || i < RESULT_LIMIT;
       card.classList.toggle("is-hidden", !keep);
       if (keep) visible++;
     });
@@ -1305,24 +1365,6 @@
     const btn = bar.querySelector("#resultMoreBtn");
     if (btn) btn.addEventListener("click", () => { showAllResults = !showAllResults; applyResultLimit(); });
   }
-
-  function enterFocus(card) {
-    if (focusedCard && focusedCard !== card) focusedCard.classList.remove("is-expanded");
-    focusedCard = card;
-    card.classList.add("is-expanded", "open");
-    const ch = card.querySelector(".rc-chevron"); if (ch) ch.style.transform = "";
-    const main = document.querySelector("main"); if (main) main.classList.add("is-focus");
-    if (el.exitFocusBtn) el.exitFocusBtn.classList.remove("is-hidden");
-    card.scrollIntoView({ block: "nearest" });
-  }
-
-  function exitFocus() {
-    if (focusedCard) { focusedCard.classList.remove("is-expanded"); focusedCard = null; }
-    const main = document.querySelector("main"); if (main) main.classList.remove("is-focus");
-    if (el.exitFocusBtn) el.exitFocusBtn.classList.add("is-hidden");
-  }
-
-  if (el.exitFocusBtn) el.exitFocusBtn.addEventListener("click", exitFocus);
 
   function buildRun(res, orderedKeys, modelUsed, snapshot, opts) {
     opts = opts || {};
@@ -1461,7 +1503,7 @@
         restoredRuns.forEach((run, i) => setRunOpen(run, !hasLive && i === 0));
         applyResultLimit();
         updateSelectionUI();
-        toast("已从本地记录恢复 " + restoredRuns.length + " 次运行");
+        toast("已从本地恢复 " + restoredRuns.length + " 次记录");
       })
       .catch((e) => { if (window.console) console.warn("load history failed:", e); });
   }
@@ -1497,9 +1539,8 @@
 
   function resetResultsEmpty() {
     if (el.results.querySelector(".run")) return false;
-    exitFocus();
     showAllResults = false;
-    el.results.innerHTML = '<div class="empty">运行后，每个问题会作为一个小方盒出现在这里。<br />最近一次的问题自动展开，历史问题自动收起。</div>';
+    el.results.innerHTML = '<div class="empty">运行后，记录可在此处查看</div>';
     updateSelectionUI();
     return true;
   }
@@ -1538,8 +1579,8 @@
     const ids = runs.map(function (r) { return r.__record && r.__record.id; }).filter(Boolean);
     if (!ids.length) { toast("这些记录没有本地 id，无法删除（可能不是通过本地代理运行）", true); return; }
     const n = runs.length;
-    askConfirm("删除运行记录",
-      "将从本地记录文件（run-log.jsonl）中永久删除选中的 " + n + " 条记录，此操作无法撤销。",
+    askConfirm("删除记录",
+      "将永久删除选中的 " + n + " 条记录，此操作无法撤销。",
       "删除 " + n + " 条"
     ).then(function (ok) {
       if (!ok) return;
@@ -1614,7 +1655,6 @@
 
     if (!questions.length) { toast("该记录没有可载入的问题", true); return; }
     renderQuestions();
-    exitFocus();
     try { el.stateInput.scrollIntoView({ block: "nearest" }); } catch (e) {}
     toast("已载入为当前模板（" + questions.length + " 个问题）");
   }
@@ -1682,23 +1722,12 @@
       '<span class="rc-label">' + escapeHtml(k.label) + '</span>' +
       '<span class="badge ' + meta.badge + '">' + meta.label + '</span>' +
       '<span class="rc-summary">' + summary + '</span>' +
-      '<span class="rc-expand" title="展开为全宽" role="button" tabindex="0">⛶</span>' +
       '<span class="rc-chevron">▾</span>';
-    const expandBtn = head.querySelector(".rc-expand");
-    const toggleExpand = (e) => {
-      if (e) e.stopPropagation();
-      const card = head.parentElement;
-      if (card.classList.contains("is-expanded")) exitFocus();
-      else enterFocus(card);
-    };
-    expandBtn.addEventListener("click", toggleExpand);
-    expandBtn.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") toggleExpand(e); });
     head.addEventListener("click", () => {
       const card = head.parentElement;
       card.classList.toggle("open");
       const open = card.classList.contains("open");
       head.querySelector(".rc-chevron").style.transform = open ? "" : "rotate(-90deg)";
-      if (!open && card.classList.contains("is-expanded")) exitFocus();
     });
     return head;
   }
@@ -1937,7 +1966,7 @@
     const box = document.createElement("div");
     box.className = "result-error";
     const hint = (!proxyAvailable)
-      ? "提示：当前是直连模式，浏览器常因 CORS 被拒绝。请运行 server.py 后访问 http://localhost:8000 再试。"
+      ? "提示：当前是直连模式，浏览器常因 CORS 被拒绝。请运行服务后再试。"
       : "请检查 API Key、模型名与请求内容。";
     let detail = err && err.data ? (typeof err.data === "string" ? err.data : JSON.stringify(err.data, null, 2)) : "";
     box.innerHTML = "<b>请求失败" + (err && err.status ? "（" + err.status + "）" : "") + "</b>" +
