@@ -155,6 +155,7 @@
   .status .dot{width:7px;height:7px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 3px var(--yellow-pale)}
   .status.ok .dot{background:var(--mint);box-shadow:0 0 0 3px var(--mint-pale)}
   .status.bad .dot{background:var(--coral);box-shadow:0 0 0 3px var(--coral-pale)}
+  .topbar-toggle{display:none}
 
   .btn{
     border:1px solid var(--line);background:var(--white);color:var(--ink);
@@ -188,7 +189,7 @@
   }
   main.is-focus{grid-template-columns:minmax(0,1fr)}
   main.is-focus .left{display:none}
-  .left,.right{min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:4px}
+  .left,.right{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding-right:4px}
   .left::-webkit-scrollbar,.right::-webkit-scrollbar{width:9px}
   .left::-webkit-scrollbar-thumb,.right::-webkit-scrollbar-thumb{
     background:var(--scrollbar);border-radius:99px;border:3px solid var(--paper);
@@ -196,7 +197,7 @@
 
   .panel{
     background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
-    padding:16px;margin-bottom:16px;box-shadow:var(--shadow);
+    padding:16px;margin-bottom:16px;box-shadow:var(--shadow);min-width:0;
   }
   .panel-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
   .panel-title{font-weight:700;font-size:15px;letter-spacing:-.01em}
@@ -266,10 +267,11 @@
   .crit-title{font-size:12px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
   .crit-title .en{font-size:10.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
   .crit-note{font-size:11px;color:var(--muted);font-weight:400}
+  .crit-add{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
 
   .opt-row{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px}
   .opt-row .opt-name{flex:0 0 32%;min-width:90px}
-  .opt-row .opt-desc{flex:1}
+  .opt-row .opt-desc{flex:1;min-width:0}
   .opt-row input{margin:0}
   .opt-row .icon-btn{margin-top:6px;flex:0 0 auto}
   .level-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
@@ -277,7 +279,7 @@
     flex:0 0 22px;height:22px;border-radius:6px;background:var(--paper);border:1px solid var(--line);
     display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--muted);
   }
-  .level-row input{flex:1}
+  .level-row input{flex:1;min-width:0}
   .mini-actions{display:flex;gap:2px}
 
   .type-picker{padding:16px}
@@ -341,7 +343,7 @@
   .rc-head:hover{background:var(--paper)}
   .rc-label{font-weight:700;font-size:13.5px}
   .rc-summary{
-    margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);
+    margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);min-width:0;
     max-width:52%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   .rc-summary b{color:var(--ink)}
@@ -360,7 +362,12 @@
   .bar-row{margin-bottom:9px}
   .bar-row:last-child{margin-bottom:0}
   .bar-top{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
-  .bar-key{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-key{font-size:12px;font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bar-idx{
+    display:inline-block;font-size:10px;font-weight:700;line-height:1.35;margin-right:6px;
+    padding:1px 7px;border-radius:999px;vertical-align:1px;
+    background:var(--paper);border:1px solid var(--line);color:var(--muted);
+  }
   .bar-key .tag{font-size:9.5px;font-weight:700;color:var(--mint-deep);background:var(--mint-pale);border-radius:5px;padding:1px 5px;margin-left:6px;vertical-align:1px}
   .bar-val{margin-left:auto;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--muted)}
   .bar-track{height:9px;background:var(--bar-track);border-radius:999px;overflow:hidden}
@@ -396,22 +403,21 @@
   .chip.big{font-size:12px;padding:4px 11px}
 
   .rc-snapshot{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
-  .rc-snapshot > summary{
-    cursor:pointer;font-size:11.5px;font-weight:600;color:var(--muted);
-    list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none;
+  .rc-details-btn{
+    margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+    border:1px solid transparent;background:transparent;color:var(--muted);
+    font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;
+    padding:2px 7px;border-radius:999px;transition:background .15s,color .15s,border-color .15s;
   }
-  .rc-snapshot > summary::-webkit-details-marker{display:none}
-  .rc-snapshot > summary::before{content:"▸";font-size:9px;transition:transform .15s}
-  .rc-snapshot[open] > summary::before{transform:rotate(90deg)}
-  .rc-snapshot > summary:hover{color:var(--ink)}
+  .rc-details-btn:hover{background:var(--line-soft);color:var(--ink)}
+  .rc-details-btn .rc-details-arrow{font-size:9px;display:inline-block;transition:transform .15s}
+  .rc-details-btn.is-open .rc-details-arrow{transform:rotate(90deg)}
   .snap-heading{font-size:11px;font-weight:700;margin:10px 0 4px;color:var(--ink)}
   .snap-body{
     font-size:11.5px;line-height:1.55;color:var(--ink);white-space:pre-wrap;word-break:break-word;
     background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:0;
     font-family:var(--mono);max-height:240px;overflow:auto;
   }
-  .snap-list{margin:0;padding-left:18px;font-size:11.5px;color:var(--ink)}
-  .snap-list li{margin:3px 0}
   .snap-caption{margin:10px 0 0;font-size:10px;color:var(--muted);font-family:var(--mono)}
 
   .result-error{
@@ -459,12 +465,57 @@
   .modal-actions{display:flex;justify-content:flex-end;gap:8px}
 
   @media (max-width:1040px){
-    body{overflow:auto;height:auto}
-    main{grid-template-columns:1fr;height:auto}
-    .left,.right{overflow:visible}
+    body{overflow:auto;overflow-x:hidden;height:auto}
+    main{grid-template-columns:minmax(0,1fr);height:auto}
+    .left,.right{overflow:visible;min-width:0}
     .type-options{grid-template-columns:1fr}
     .opt-row{flex-wrap:wrap}
     .opt-row .opt-name{flex:1 1 100%}
+  }
+
+  /* ---------- 手机端 ---------- */
+  @media (max-width:640px){
+    .topbar{width:100%;align-self:stretch;padding:10px 12px;gap:10px;align-items:stretch}
+    .topbar.is-collapsed{padding-top:8px;padding-bottom:8px}
+    .brand{width:100%;padding-bottom:0}
+    .fields{flex:1 1 100%;gap:10px}
+    .field-ctl.url,.field-ctl.model,.field-ctl.key{flex:1 1 100%}
+    .top-actions{width:100%;margin-left:0;gap:8px;padding-bottom:0;flex-wrap:wrap}
+    #runBtn{flex:1 1 auto;justify-content:center}
+
+    /* 折叠：只保留主题切换、代理状态与运行按钮 */
+    .topbar-toggle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:34px;padding:7px 0;font-size:12px;line-height:1}
+    .tbt-chevron{display:inline-block;transition:transform .2s}
+    .topbar.is-collapsed .tbt-chevron{transform:rotate(180deg)}
+    .topbar.is-collapsed .brand,.topbar.is-collapsed .fields{display:none}
+
+    main{padding:12px 12px 28px;gap:12px}
+    .left,.right{padding-right:0}
+    .panel{padding:12px;margin-bottom:12px}
+    .panel-head{gap:8px;margin-bottom:10px}
+
+    /* 单列布局下全宽展开无意义，隐藏展开按钮以留出标题空间 */
+    .rc-expand{display:none}
+    .rc-head{padding:9px 10px;gap:7px}
+    .rc-label{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+    .rc-head .badge{flex:0 0 auto}
+    .rc-summary{flex:1 1 auto;min-width:0;max-width:none;text-align:right;font-size:11.5px}
+
+    /* 触屏没有 hover，操作按钮常驻可见、点击区域更大 */
+    .run-actions{opacity:1;gap:0}
+    .run-actions .act{padding:4px 8px}
+    .icon-btn{width:30px;height:30px;font-size:15px}
+    .q-label-input{font-size:16px;max-width:100%}
+
+    /* 避免 iOS 聚焦输入框时自动放大 */
+    input[type=text],input[type=password],textarea{font-size:16px}
+    textarea#stateInput{min-height:130px;font-size:16px}
+    html[data-state-mode="json"] textarea#stateInput{font-size:15px}
+
+    #toast{left:12px;right:12px;bottom:14px;transform:none}
+    .toast{width:100%;max-width:none}
+    .modal-backdrop{padding:12px}
+    .modal{padding:15px 14px 12px}
   }
 </style>
 </head>
@@ -497,6 +548,7 @@
     </div>
 
     <div class="top-actions">
+      <button type="button" class="btn btn-sm topbar-toggle" id="topbarToggle" title="收起 / 展开配置" aria-expanded="true"><span class="tbt-chevron">▴</span></button>
       <div class="seg theme-seg" id="themeSeg" role="group" aria-label="主题">
         <button type="button" data-theme="light" title="亮色主题">亮</button>
         <button type="button" data-theme="dark" title="暗色主题">暗</button>
@@ -533,7 +585,7 @@
           <button class="btn btn-sm btn-mint" id="addQBtn">＋ 添加问题</button>
         </div>
         <div class="q-list" id="qList"></div>
-        <div class="empty" id="qEmpty">暂无问题<br />点击「添加问题」按钮</div>
+        <div class="empty" id="qEmpty">点击按钮「添加问题」</div>
       </div>
     </section>
 
@@ -578,9 +630,9 @@
   "use strict";
 
   const DEFAULT_LIMITS = {
-    maxState: 1000,
+    maxState: 10240,
     maxInstructions: 300,
-    maxQuestions: 15,
+    maxQuestions: 16,
     maxChoiceOptions: 128,
     maxQuestionLabel: 40,
     maxOptionName: 80,
@@ -608,6 +660,7 @@
   const $ = (id) => document.getElementById(id);
   const el = {
     apiUrl: $("apiUrl"), model: $("model"), apiKey: $("apiKey"),
+    topbar: document.querySelector(".topbar"), topbarToggle: $("topbarToggle"),
     stateInput: $("stateInput"), stateCounter: $("stateCounter"),
     stateMode: $("stateMode"),
     qList: $("qList"), qEmpty: $("qEmpty"), qCount: $("qCount"), addQBtn: $("addQBtn"),
@@ -648,6 +701,27 @@
   const onSystemThemeChange = () => { if (themePref === "system") applyTheme("system", false); };
   if (darkMql.addEventListener) darkMql.addEventListener("change", onSystemThemeChange);
   else if (darkMql.addListener) darkMql.addListener(onSystemThemeChange);
+
+  /* ============ mobile topbar collapse ============ */
+  const TOPBAR_KEY = "jev.topbarCollapsed";
+  const isNarrow = () => window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+  let topbarCollapsed = false;
+  try { topbarCollapsed = localStorage.getItem(TOPBAR_KEY) === "1"; } catch (e) {}
+
+  function applyTopbarCollapse() {
+    if (!el.topbar) return;
+    el.topbar.classList.toggle("is-collapsed", topbarCollapsed && isNarrow());
+    if (el.topbarToggle) el.topbarToggle.setAttribute("aria-expanded", topbarCollapsed ? "false" : "true");
+  }
+  applyTopbarCollapse();
+  if (el.topbarToggle) {
+    el.topbarToggle.addEventListener("click", () => {
+      topbarCollapsed = !topbarCollapsed;
+      try { localStorage.setItem(TOPBAR_KEY, topbarCollapsed ? "1" : "0"); } catch (e) {}
+      applyTopbarCollapse();
+    });
+  }
+  window.addEventListener("resize", applyTopbarCollapse);
 
   /* ============ config persistence (key is intentionally not stored) ============ */
   try {
@@ -903,8 +977,7 @@
     container.innerHTML = "";
     if (q.type === "noul") {
       container.innerHTML =
-        '<div class="crit-title">Criteria <span class="en">optional</span>' +
-        '<span class="crit-note">可选：分别描述「是」与「否」的边界</span></div>' +
+        '<div class="crit-title">Criteria <span class="en">optional</span></div>' +
         '<div class="field"><div class="field-top"><label>判为「是」的含义</label><span class="en">true</span></div></div>' +
         '<div class="field"><div class="field-top"><label>判为「否」的含义</label><span class="en">false</span></div></div>';
       const taT = document.createElement("textarea");
@@ -921,8 +994,7 @@
     if (q.type === "choice") {
       const wrap = document.createElement("div");
       wrap.innerHTML =
-        '<div class="crit-title">Criteria <span class="en">options</span>' +
-        '<span class="crit-note">2–' + MAX_CHOICE_OPTIONS + ' 个选项（选项名作为 key，描述可留空）</span></div>';
+        '<div class="crit-title">Criteria <span class="en">options</span>';
       const list = document.createElement("div");
       const render = () => {
         list.innerHTML = "";
@@ -934,7 +1006,7 @@
           name.maxLength = LIMITS.maxOptionName; name.value = opt.name;
           name.addEventListener("input", () => opt.name = name.value);
           const desc = document.createElement("input");
-          desc.type = "text"; desc.className = "opt-desc"; desc.placeholder = "描述（可选）";
+          desc.type = "text"; desc.className = "opt-desc"; desc.placeholder = "可留空";
           desc.maxLength = LIMITS.maxOptionDesc; desc.value = opt.desc;
           desc.addEventListener("input", () => opt.desc = desc.value);
           const del = document.createElement("button");
@@ -952,8 +1024,11 @@
       render();
       const add = document.createElement("button");
       add.type = "button"; add.className = "btn btn-sm";
+      const count = document.createElement("span");
+      count.className = "chip";
       const syncAdd = () => {
-        add.textContent = "＋ 添加选项（" + q.choice.length + "/" + MAX_CHOICE_OPTIONS + "）";
+        add.textContent = "＋ 添加选项";
+        count.textContent = q.choice.length + " / " + MAX_CHOICE_OPTIONS;
         add.disabled = q.choice.length >= MAX_CHOICE_OPTIONS;
       };
       add.addEventListener("click", () => {
@@ -963,17 +1038,20 @@
         syncAdd();
       });
       syncAdd();
+      const addRow = document.createElement("div");
+      addRow.className = "crit-add";
+      addRow.appendChild(add);
+      addRow.appendChild(count);
       container.appendChild(wrap);
       container.appendChild(list);
-      container.appendChild(add);
+      container.appendChild(addRow);
       return;
     }
 
     if (q.type === "score") {
       const wrap = document.createElement("div");
       wrap.innerHTML =
-        '<div class="crit-title">Criteria <span class="en">levels</span>' +
-        '<span class="crit-note">按从低到高排列，' + MIN_LEVELS + '–' + MAX_LEVELS + ' 个等级</span></div>';
+        '<div class="crit-title">Criteria <span class="en">levels</span>';
       const list = document.createElement("div");
       const render = () => {
         list.innerHTML = "";
@@ -1000,7 +1078,7 @@
           del.type = "button"; del.className = "icon-btn danger"; del.textContent = "✕"; del.title = "删除等级";
           del.disabled = q.score.length <= MIN_LEVELS;
           del.style.opacity = q.score.length <= MIN_LEVELS ? ".35" : "";
-          del.addEventListener("click", () => { if (q.score.length <= MIN_LEVELS) return; q.score.splice(i, 1); render(); });
+          del.addEventListener("click", () => { if (q.score.length <= MIN_LEVELS) return; q.score.splice(i, 1); render(); syncAdd(); });
           acts.appendChild(up); acts.appendChild(dn); acts.appendChild(del);
           row.appendChild(num); row.appendChild(inp); row.appendChild(acts);
           list.appendChild(row);
@@ -1008,12 +1086,23 @@
       };
       render();
       const add = document.createElement("button");
-      add.type = "button"; add.className = "btn btn-sm"; add.textContent = "＋ 添加等级";
-      add.disabled = q.score.length >= MAX_LEVELS;
-      add.addEventListener("click", () => { if (q.score.length >= MAX_LEVELS) return; q.score.push(""); render(); });
+      add.type = "button"; add.className = "btn btn-sm";
+      const count = document.createElement("span");
+      count.className = "chip";
+      const syncAdd = () => {
+        add.textContent = "＋ 添加等级";
+        count.textContent = q.score.length + " / " + MAX_LEVELS;
+        add.disabled = q.score.length >= MAX_LEVELS;
+      };
+      add.addEventListener("click", () => { if (q.score.length >= MAX_LEVELS) return; q.score.push(""); render(); syncAdd(); });
+      syncAdd();
+      const addRow = document.createElement("div");
+      addRow.className = "crit-add";
+      addRow.appendChild(add);
+      addRow.appendChild(count);
       container.appendChild(wrap);
       container.appendChild(list);
-      container.appendChild(add);
+      container.appendChild(addRow);
     }
   }
 
@@ -1094,12 +1183,22 @@
       .then((out) => {
         renderRun(out.data, orderedKeys, model, payload, undefined, out.logId);
         toast("Jev 已返回结果");
+        focusResultsOnMobile();
       })
       .catch((err) => {
         renderError(err);
         toast("请求失败：" + err.message, true);
+        focusResultsOnMobile();
       })
       .finally(() => setLoading(false));
+  }
+
+  // 手机端单列排版时，运行完自动滚动到结果区
+  function focusResultsOnMobile() {
+    if (!window.matchMedia || !window.matchMedia("(max-width: 640px)").matches) return;
+    const target = el.results.closest(".right") || el.results;
+    try { target.scrollIntoView({ behavior: "smooth", block: "start" }); }
+    catch (e) { target.scrollIntoView(); }
   }
 
   function setLoading(on) {
@@ -1277,7 +1376,7 @@
       card.className = "result-card" + (opts.collapsed ? "" : " open");
       card.appendChild(resultCardHead(k, ans));
       const body = resultCardBody(k, ans);
-      body.appendChild(snapshotBlock(k, snapshot, runModel));
+      body.appendChild(snapshotBlock(k, snapshot, runModel, body));
       card.appendChild(body);
       run.appendChild(card);
     });
@@ -1604,21 +1703,40 @@
     return head;
   }
 
-  function snapshotBlock(k, snapshot, model) {
-    const det = document.createElement("details");
+  function snapshotBlock(k, snapshot, model, body) {
+    // 详情内容（默认隐藏）
+    const det = document.createElement("div");
     det.className = "rc-snapshot";
-    const summary = document.createElement("summary");
-    summary.textContent = "查看当时的材料和标准";
-    det.appendChild(summary);
+    det.hidden = true;
+
+    // 触发按钮放在与答案 / 置信度同一行的底栏右侧
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "rc-details-btn";
+    toggle.setAttribute("aria-expanded", "false");
+    toggle.innerHTML = '<span class="rc-details-arrow">▸</span>详情';
+    toggle.addEventListener("click", () => {
+      const open = det.hidden;
+      det.hidden = !open;
+      toggle.classList.toggle("is-open", open);
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    let foot = body && body.querySelector(".rc-foot");
+    if (!foot) {
+      foot = document.createElement("div");
+      foot.className = "rc-foot";
+      if (body) body.appendChild(foot);
+    }
+    foot.appendChild(toggle);
 
     const questionsMap = (snapshot && snapshot.questions) || {};
     const qdef = questionsMap[k.key] || null;
 
-    det.appendChild(snapHeading("1 · 要检查的材料"));
+    det.appendChild(snapHeading("STATE"));
     det.appendChild(snapBody(formatEntry(snapshot ? snapshot.state : undefined)));
 
     if (qdef) {
-      det.appendChild(snapHeading("2 · 问题（instructions）"));
+      det.appendChild(snapHeading("QUESTIONS · Instructions"));
       det.appendChild(snapBody(formatEntry(qdef.instructions)));
 
       if (qdef.type === "noul" && qdef.criteria) {
@@ -1631,26 +1749,17 @@
           det.appendChild(snapBody(formatEntry(qdef.criteria["false"])));
         }
       } else if (qdef.type === "choice" && qdef.criteria) {
-        det.appendChild(snapHeading("选项标准（criteria）"));
-        const ul = document.createElement("ul");
-        ul.className = "snap-list";
-        Object.keys(qdef.criteria).forEach((name) => {
-          const li = document.createElement("li");
+        det.appendChild(snapHeading("QUESTIONS · Criteria ( OPTIONS )"));
+        const lines = Object.keys(qdef.criteria).map((name) => {
           const desc = qdef.criteria[name];
-          li.textContent = name + (desc != null && desc !== "" ? " —— " + formatEntry(desc) : "");
-          ul.appendChild(li);
+          return name + (desc != null && desc !== "" ? " · " + formatEntry(desc) : "");
         });
-        det.appendChild(ul);
+        det.appendChild(snapBody(lines.join("\n")));
       } else if (qdef.type === "score" && Array.isArray(qdef.criteria)) {
-        det.appendChild(snapHeading("评分等级（从低到高）"));
-        const ol = document.createElement("ol");
-        ol.className = "snap-list";
-        qdef.criteria.forEach((lv) => {
-          const li = document.createElement("li");
-          li.textContent = formatEntry(lv);
-          ol.appendChild(li);
-        });
-        det.appendChild(ol);
+        det.appendChild(snapHeading("QUESTIONS · Criteria ( LEVELS )"));
+        // 等级编号与编辑器一致，从 0 开始
+        const lines = qdef.criteria.map((lv, i) => i + " · " + formatEntry(lv));
+        det.appendChild(snapBody(lines.join("\n")));
       }
     }
 
@@ -1765,7 +1874,7 @@
         const desc = legend[key] != null ? String(legend[key]) : key;
         const isTop = key === top;
         const isSecond = !isTop && key === second;
-        body.appendChild(barRow(key + " · " + desc, Number(probs[key]) || 0, isTop || isSecond, false, isSecond));
+        body.appendChild(barRow(desc, Number(probs[key]) || 0, isTop || isSecond, false, isSecond, key));
       });
       const foot = document.createElement("div");
       foot.className = "rc-foot";
@@ -1783,7 +1892,7 @@
     return body;
   }
 
-  function barRow(label, value, chosen, showTag, dim) {
+  function barRow(label, value, chosen, showTag, dim, idx) {
     const v = clamp01(value);
     const row = document.createElement("div");
     row.className = "bar-row" + (chosen ? " is-chosen" : "") + (chosen && dim ? " is-second" : "");
@@ -1791,7 +1900,15 @@
     top.className = "bar-top";
     const key = document.createElement("span");
     key.className = "bar-key";
-    key.textContent = label;
+    if (idx != null) {
+      const idxSpan = document.createElement("span");
+      idxSpan.className = "bar-idx";
+      idxSpan.textContent = idx;
+      key.appendChild(idxSpan);
+      key.appendChild(document.createTextNode(label));
+    } else {
+      key.textContent = label;
+    }
     if (showTag) { const tag = document.createElement("span"); tag.className = "tag"; tag.textContent = "选定"; key.appendChild(tag); }
     const val = document.createElement("span");
     val.className = "bar-val";
