@@ -463,6 +463,30 @@
   .modal-title{font-size:15px;font-weight:800;margin-bottom:8px}
   .modal-msg{font-size:13px;line-height:1.6;color:var(--muted);white-space:pre-wrap;margin-bottom:16px}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px}
+  /* 导入问题弹窗 */
+  .modal-wide{width:min(660px,100%)}
+  #modal{z-index:70}
+  #importText{min-height:190px;font-family:var(--mono);font-size:12.5px;line-height:1.55}
+  .import-pick{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .import-file-name{font-size:11.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .import-help{margin-top:10px}
+  .import-help > summary{
+    cursor:pointer;font-size:11.5px;font-weight:600;color:var(--muted);
+    list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none;
+  }
+  .import-help > summary::-webkit-details-marker{display:none}
+  .import-help > summary::before{content:"▸";font-size:9px;transition:transform .15s}
+  .import-help[open] > summary::before{transform:rotate(90deg)}
+  .import-help > summary:hover{color:var(--ink)}
+  .import-help pre{
+    margin:8px 0 6px;padding:9px 11px;background:var(--paper);border:1px solid var(--line);
+    border-radius:8px;font-family:var(--mono);font-size:11px;line-height:1.55;white-space:pre;overflow:auto;max-height:210px;
+  }
+  .import-help p{margin:0;font-size:11.5px;line-height:1.55;color:var(--muted)}
+  .import-help code{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+  .modal-msg code{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+  .import-mode{display:flex;align-items:center;gap:10px;margin-top:12px}
+  .import-mode-label{font-size:11.5px;font-weight:700;color:var(--muted)}
 
   @media (max-width:1040px){
     body{overflow:auto;overflow-x:hidden;height:auto}
@@ -511,6 +535,7 @@
     input[type=text],input[type=password],textarea{font-size:16px}
     textarea#stateInput{min-height:130px;font-size:16px}
     html[data-state-mode="json"] textarea#stateInput{font-size:15px}
+    #importText{font-size:16px;min-height:150px}
 
     #toast{left:12px;right:12px;bottom:14px;transform:none}
     .toast{width:100%;max-width:none}
@@ -582,6 +607,7 @@
           <div class="panel-title">问题<span class="en">questions</span></div>
           <div class="spacer"></div>
           <span class="pill" id="qCount">0</span>
+          <button class="btn btn-sm" id="importQBtn">导入</button>
           <button class="btn btn-sm btn-mint" id="addQBtn">＋ 添加问题</button>
         </div>
         <div class="q-list" id="qList"></div>
@@ -626,6 +652,54 @@
     </div>
   </div>
 
+  <div class="modal-backdrop is-hidden" id="importModal">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+      <div class="modal-title" id="importTitle">导入问题</div>
+      <div class="modal-msg">选择文件导入，或粘贴问题文本</div>
+      <div class="import-pick">
+        <button type="button" class="btn btn-sm" id="importPickBtn">选择文件</button>
+        <input type="file" id="importFile" class="is-hidden" accept=".txt,.md,.text,.json,text/plain,application/json" />
+        <span class="import-file-name" id="importFileName"></span>
+      </div>
+      <textarea id="importText" spellcheck="false" placeholder="* Q1&#10;t: choice&#10;i: 太阳是什么颜色的？&#10;c:&#10;- &quot;A&quot;: &quot;红色&quot;&#10;- &quot;B&quot;: &quot;黄色&quot;"></textarea>
+      <details class="import-help">
+          <summary>格式示例</summary>
+          <pre>* Q1
+t: noul
+i: 是否正确？
+c:
+- True: "正确"
+- False: "错误"
+
+* Q2
+t: choice
+i: 太阳是什么颜色的？
+c:
+- "A": "红色"
+- "B": "黄色"
+
+* Q3
+t: score
+i: 这段内容属于什么风险等级？
+c:
+- 0: "无风险"
+- 1: "低风险"
+- 2: "高风险"</pre>
+      </details>
+      <div class="import-mode">
+        <span class="import-mode-label">导入方式</span>
+        <div class="seg" id="importMode">
+          <button type="button" data-mode="append" class="active">追加</button>
+          <button type="button" data-mode="replace">覆盖</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="importCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="importOk">导入</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function () {
   "use strict";
@@ -664,7 +738,7 @@
     topbar: document.querySelector(".topbar"), topbarToggle: $("topbarToggle"),
     stateInput: $("stateInput"), stateCounter: $("stateCounter"),
     stateMode: $("stateMode"),
-    qList: $("qList"), qEmpty: $("qEmpty"), qCount: $("qCount"), addQBtn: $("addQBtn"),
+    qList: $("qList"), qEmpty: $("qEmpty"), qCount: $("qCount"), addQBtn: $("addQBtn"), importQBtn: $("importQBtn"),
     results: $("results"), runBtn: $("runBtn"),
     splitter: $("splitter"),
     proxyStatus: $("proxyStatus"), proxyText: $("proxyText"),
@@ -674,7 +748,11 @@
     selTools: $("selTools"), selectAllRuns: $("selectAllRuns"), logSelected: $("logSelected"),
     downloadSelBtn: $("downloadSelBtn"), deleteSelBtn: $("deleteSelBtn"),
     modal: $("modal"), modalTitle: $("modalTitle"), modalMsg: $("modalMsg"),
-    modalOk: $("modalOk"), modalCancel: $("modalCancel")
+    modalOk: $("modalOk"), modalCancel: $("modalCancel"),
+    importModal: $("importModal"), importText: $("importText"), importFile: $("importFile"),
+    importPickBtn: $("importPickBtn"), importFileName: $("importFileName"),
+    importMode: $("importMode"),
+    importOk: $("importOk"), importCancel: $("importCancel")
   };
 
   /* ============ theme (light / dark / system) ============ */
@@ -921,6 +999,7 @@
     el.qCount.textContent = questions.length + " / " + MAX_QUESTIONS;
     el.qCount.classList.toggle("full", questions.length >= MAX_QUESTIONS);
     el.addQBtn.disabled = questions.length >= MAX_QUESTIONS;
+    if (el.importQBtn) el.importQBtn.disabled = questions.length >= MAX_QUESTIONS;
     el.qEmpty.style.display = questions.length ? "none" : "";
   }
 
@@ -932,6 +1011,189 @@
     const card = el.qList.querySelector('[data-id="' + q.id + '"]');
     if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
+
+  /* ---------- 导入问题 ---------- */
+  function parseQuestionJson(src) {
+    const raw = String(src || "").trim();
+    if (!raw || (raw[0] !== "{" && raw[0] !== "[")) return null;
+    let data;
+    try { data = JSON.parse(raw); } catch (e) { return null; }
+    if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+
+    // 支持导出的整条记录（含 questions 字段）或直接的问题映射
+    const looksLikeDef = (v) => v && typeof v === "object" && !Array.isArray(v) &&
+      ("type" in v || "instructions" in v || "criteria" in v);
+    let map = null;
+    if (data.questions && typeof data.questions === "object" && !Array.isArray(data.questions)) {
+      const qv = Object.keys(data.questions).map((k) => data.questions[k]);
+      if (qv.length === 0 || qv.every(looksLikeDef)) map = data.questions;
+    }
+    if (!map) {
+      const vals = Object.keys(data).map((k) => data[k]);
+      if (vals.length > 0 && vals.every(looksLikeDef)) map = data;
+    }
+    if (!map) return null;
+
+    const out = [];
+    Object.keys(map).forEach((key) => {
+      const def = map[key] || {};
+      const type = String(def.type || "noul").toLowerCase();
+      if (type !== "noul" && type !== "choice" && type !== "score") return;
+      const item = {
+        label: key,
+        type: type,
+        instructions: entryToText(def.instructions),
+        choice: [ { name: "", desc: "" }, { name: "", desc: "" } ],
+        score: ["", ""],
+        noulTrue: "",
+        noulFalse: ""
+      };
+      if (type === "choice" && def.criteria && typeof def.criteria === "object" && !Array.isArray(def.criteria)) {
+        const opts = Object.keys(def.criteria).map((nm) => ({ name: nm, desc: entryToText(def.criteria[nm]) }));
+        if (opts.length) item.choice = opts;
+        while (item.choice.length < 2) item.choice.push({ name: "", desc: "" });
+      }
+      if (type === "score" && Array.isArray(def.criteria)) {
+        const levels = def.criteria.map(entryToText);
+        if (levels.length) item.score = levels;
+        while (item.score.length < MIN_LEVELS) item.score.push("");
+      }
+      if (type === "noul" && def.criteria && typeof def.criteria === "object") {
+        item.noulTrue = entryToText(def.criteria["true"]);
+        item.noulFalse = entryToText(def.criteria["false"]);
+      }
+      out.push(item);
+    });
+    return out.length ? out : null;
+  }
+
+  function parseQuestionText(text) {
+    const src = String(text || "").replace(/\r\n?/g, "\n");
+    const asJson = parseQuestionJson(src);
+    if (asJson) return asJson;
+    const lines = src.split("\n");
+    const blocks = [];
+    let cur = null;
+    let inCriteria = false;
+
+    const unquote = (s) => {
+      s = (s == null ? "" : String(s)).trim();
+      const pairs = [["\"", "\""], ["'", "'"], ["「", "」"], ["“", "”"]];
+      for (let i = 0; i < pairs.length; i++) {
+        const a = pairs[i][0], b = pairs[i][1];
+        if (s.length >= 2 && s[0] === a && s[s.length - 1] === b) return s.slice(1, -1).trim();
+      }
+      return s;
+    };
+    const splitKV = (s) => {
+      let q = null;
+      for (let i = 0; i < s.length; i++) {
+        const c = s[i];
+        if (q) { if (c === q) q = null; }
+        else if (c === "\"" || c === "'") q = c;
+        else if (c === "“") q = "”";
+        else if (c === "「") q = "」";
+        else if (c === ":" || c === "：") return [s.slice(0, i), s.slice(i + 1)];
+      }
+      return [s, ""];
+    };
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].replace(/\s+$/, "");
+      if (!line.trim()) { inCriteria = false; continue; }
+
+      // 以「* 名称」开头视为新问题
+      const qm = line.match(/^\s*\*\s*(.*)$/);
+      if (qm) {
+        cur = { label: qm[1].trim(), type: "", instructions: "", criteria: [] };
+        blocks.push(cur);
+        inCriteria = false;
+        continue;
+      }
+      if (!cur) continue;
+
+      const kv = line.match(/^\s*([A-Za-z]+)\s*[:：]\s*(.*)$/);
+      if (kv) {
+        const key = kv[1].toLowerCase();
+        if (key === "t") { cur.type = kv[2].trim().toLowerCase(); inCriteria = false; continue; }
+        if (key === "i") { cur.instructions = kv[2].trim(); inCriteria = false; continue; }
+        if (key === "c") { inCriteria = true; continue; }
+      }
+
+      if (inCriteria && /^\s*[-•]/.test(line)) {
+        const body = line.replace(/^\s*[-•]\s*/, "");
+        const parts = splitKV(body);
+        cur.criteria.push({ key: unquote(parts[0]), value: unquote(parts[1]) });
+      }
+    }
+
+    const out = [];
+    blocks.forEach((b, i) => {
+      const type = b.type;
+      if (type !== "noul" && type !== "choice" && type !== "score") return;
+      const q = {
+        label: b.label,
+        type: type,
+        instructions: b.instructions,
+        choice: [],
+        score: [],
+        noulTrue: "",
+        noulFalse: ""
+      };
+      if (type === "noul") {
+        b.criteria.forEach((it) => {
+          const k = it.key.trim().toLowerCase();
+          if (k === "true" || k === "t") q.noulTrue = it.value;
+          else if (k === "false" || k === "f") q.noulFalse = it.value;
+        });
+      } else if (type === "choice") {
+        q.choice = b.criteria.map((it) => ({ name: it.key, desc: it.value }));
+        while (q.choice.length < 2) q.choice.push({ name: "", desc: "" });
+      } else {
+        const nums = b.criteria.map((it) => parseInt(it.key, 10));
+        const allNum = b.criteria.length > 0 && nums.every((n) => isFinite(n));
+        const ordered = allNum
+          ? b.criteria.map((it, idx) => ({ it: it, n: nums[idx] })).sort((a, b2) => a.n - b2.n).map((x) => x.it)
+          : b.criteria.slice();
+        q.score = ordered.map((it) => it.value);
+        while (q.score.length < MIN_LEVELS) q.score.push("");
+      }
+      out.push(q);
+    });
+    return out;
+  }
+
+  function importQuestions(text, overwrite) {
+    const items = parseQuestionText(text);
+    if (!items.length) { toast("未识别到有效的问题，请检查格式", true); return false; }
+    const room = overwrite ? MAX_QUESTIONS : MAX_QUESTIONS - questions.length;
+    if (items.length > room) {
+      const msg = overwrite
+        ? "最多 " + MAX_QUESTIONS + " 个问题，本次要导入 " + items.length + " 个"
+        : "最多 " + MAX_QUESTIONS + " 个问题，当前已有 " + questions.length + " 个，本次要导入 " + items.length + " 个";
+      toast(msg, true);
+      return false;
+    }
+    if (overwrite) { questions = []; qseq = 0; }
+    const base = questions.length;
+    items.forEach((it, i) => {
+      qseq += 1;
+      questions.push({
+        id: "id_" + qseq,
+        label: it.label || ("Q" + (base + i + 1)),
+        type: it.type,
+        instructions: it.instructions,
+        choice: it.choice.length ? it.choice : [ { name: "", desc: "" }, { name: "", desc: "" } ],
+        score: it.score.length ? it.score : ["", ""],
+        noulTrue: it.noulTrue,
+        noulFalse: it.noulFalse,
+        open: true
+      });
+    });
+    renderQuestions();
+    toast((overwrite ? "已覆盖为 " : "已追加 ") + items.length + " 个问题");
+    return true;
+  }
 
   function renderQuestions() {
     el.qList.innerHTML = "";
@@ -1171,8 +1433,13 @@
   /* ============ run ============ */
   el.runBtn.addEventListener("click", run);
   document.addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); run(); }
-    else if (e.key === "Escape" && el.modal && !el.modal.classList.contains("is-hidden")) closeModal(false);
+    const confirmOpen = el.modal && !el.modal.classList.contains("is-hidden");
+    const importOpen = el.importModal && !el.importModal.classList.contains("is-hidden");
+    if (e.key === "Escape") {
+      if (confirmOpen) { closeModal(false); return; }
+      if (importOpen) { closeImportModal(); return; }
+    }
+    if (!confirmOpen && !importOpen && (e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); run(); }
   });
 
   function run() {
@@ -1693,6 +1960,74 @@
   if (el.modalOk) el.modalOk.addEventListener("click", function () { closeModal(true); });
   if (el.modalCancel) el.modalCancel.addEventListener("click", function () { closeModal(false); });
   if (el.modal) el.modal.addEventListener("click", function (e) { if (e.target === el.modal) closeModal(false); });
+
+  /* ---------- 导入弹窗 ---------- */
+  let importMode = "append";
+  function setImportMode(mode) {
+    importMode = mode === "replace" ? "replace" : "append";
+    if (!el.importMode) return;
+    [].forEach.call(el.importMode.children, function (b) {
+      b.classList.toggle("active", b.dataset.mode === importMode);
+    });
+  }
+  function openImportModal() {
+    if (!el.importModal) return;
+    if (el.importText) el.importText.value = "";
+    if (el.importFileName) el.importFileName.textContent = "";
+    if (el.importFile) el.importFile.value = "";
+    setImportMode("append");
+    el.importModal.classList.remove("is-hidden");
+    try { if (el.importText) el.importText.focus(); } catch (e) {}
+  }
+  function closeImportModal() {
+    if (el.importModal) el.importModal.classList.add("is-hidden");
+  }
+  function readImportFile(file) {
+    const reader = new FileReader();
+    reader.onload = function () {
+      let text = "";
+      try { text = new TextDecoder("utf-8").decode(reader.result); } catch (e) { text = ""; }
+      // UTF-8 解码出现乱码时，尝试 GBK（兼容中文 Windows 保存的文本）
+      if (!text || text.indexOf("\uFFFD") !== -1) {
+        try { text = new TextDecoder("gbk").decode(reader.result); } catch (e) {}
+      }
+      if (el.importText) el.importText.value = text;
+    };
+    reader.onerror = function () { toast("读取文件失败", true); };
+    reader.readAsArrayBuffer(file);
+  }
+  async function runImport() {
+    const text = el.importText ? el.importText.value : "";
+    if (!text.trim()) { toast("请粘贴问题文本或选择文件", true); return; }
+    const overwrite = importMode === "replace";
+    if (overwrite && questions.length) {
+      const ok = await askConfirm(
+        "覆盖问题列表",
+        "覆盖模式会用导入的问题替换当前全部 " + questions.length + " 个问题（未保存的修改会丢失），是否继续？",
+        "覆盖并导入"
+      );
+      if (!ok) return;
+    }
+    if (importQuestions(text, overwrite)) closeImportModal();
+  }
+  if (el.importQBtn) el.importQBtn.addEventListener("click", openImportModal);
+  if (el.importCancel) el.importCancel.addEventListener("click", closeImportModal);
+  if (el.importModal) el.importModal.addEventListener("click", function (e) { if (e.target === el.importModal) closeImportModal(); });
+  if (el.importMode) el.importMode.addEventListener("click", function (e) {
+    const b = e.target.closest("button[data-mode]");
+    if (b) setImportMode(b.dataset.mode);
+  });
+  if (el.importPickBtn && el.importFile) el.importPickBtn.addEventListener("click", function () { el.importFile.click(); });
+  if (el.importFile) el.importFile.addEventListener("change", function () {
+    const f = el.importFile.files && el.importFile.files[0];
+    if (!f) return;
+    if (el.importFileName) el.importFileName.textContent = f.name;
+    readImportFile(f);
+  });
+  if (el.importText) el.importText.addEventListener("keydown", function (e) {
+    if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); runImport(); }
+  });
+  if (el.importOk) el.importOk.addEventListener("click", function () { runImport(); });
 
   /* ---------- 工具栏 ---------- */
   if (el.selectAllRuns) el.selectAllRuns.addEventListener("change", function () {
