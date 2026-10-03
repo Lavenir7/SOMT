@@ -5,8 +5,9 @@ Jev Playground 本地服务。
 
 作用：
   1. 托管 index.html（同目录静态文件）。
-  2. 提供 /api/systemone 代理，把浏览器请求转发到 TypeSafe API。
-     —— 因为 https://api.typesafe.ai 不允许浏览器跨域直连，必须经由本地代理。
+  2. 提供 /api/systemone 代理，把浏览器请求转发到请求头 X-Jev-Url 指定的
+     SystemOne API（未指定时用默认地址 https://api.typesafe.ai/v1/systemone）。
+     经本地代理可绕过浏览器跨域限制。
   3. 自动读取同目录下的 systemone.apikey 作为 API Key（也可在页面顶部临时填写覆盖）。
   4. 把每次运行的请求与返回追加记录到本地文件 run-log.jsonl。
 
@@ -22,7 +23,6 @@ API Key 优先级：请求头 > systemone.apikey > 环境变量 TYPESAFE_API_KEY
     HOST=127.0.0.1                 监听地址
     PORT=8000                      监听端口
     TYPESAFE_API_KEY=<key>          备用 API Key（优先级低于 systemone.apikey）
-    JEV_ALLOW_ANY_HOST=1           允许代理到任意 URL（默认只允许 *.typesafe.ai）
     JEV_ALLOW_REMOTE_KEY_WRITE=1   允许非本机请求写入 API Key（默认仅本机）
     JEV_LOG_FILE=<path>            运行记录文件（默认同目录 run-log.jsonl）
     JEV_LOG_DISABLE=1              关闭运行记录
@@ -50,7 +50,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 HOST = os.environ.get("HOST", "127.0.0.1")
 PORT = int(os.environ.get("PORT", "8000"))
 TIMEOUT = int(os.environ.get("JEV_TIMEOUT", "180"))
-ALLOW_ANY = os.environ.get("JEV_ALLOW_ANY_HOST", "") not in ("", "0", "false", "False")
 ALLOW_REMOTE_KEY_WRITE = os.environ.get("JEV_ALLOW_REMOTE_KEY_WRITE", "") not in ("", "0", "false", "False")
 ALLOW_REMOTE_LOG_WRITE = os.environ.get("JEV_ALLOW_REMOTE_LOG_WRITE", "") not in ("", "0", "false", "False")
 DEFAULT_TARGET = "https://api.typesafe.ai/v1/systemone"
@@ -87,16 +86,14 @@ MIME = {
 
 
 def is_allowed_target(url: str) -> bool:
-    if ALLOW_ANY:
-        return True
+    """仅校验协议为 http/https；不限制具体主机（不再强制绑定 typesafe.ai）。"""
     try:
         parsed = urlparse(url)
     except Exception:
         return False
     if parsed.scheme not in ("http", "https"):
         return False
-    host = (parsed.hostname or "").lower()
-    return host == "typesafe.ai" or host.endswith(".typesafe.ai")
+    return bool(parsed.hostname)
 
 
 def extract_bearer(auth: str) -> str:
@@ -497,7 +494,7 @@ class Handler(BaseHTTPRequestHandler):
         target = (self.headers.get("X-Jev-Url") or DEFAULT_TARGET).strip()
         if not is_allowed_target(target):
             self._send_json(400, {"error": {"message":
-                "拒绝代理到该地址（仅允许 *.typesafe.ai）。可用 JEV_ALLOW_ANY_HOST=1 放开。"}})
+                "代理地址无效，仅支持 http/https 的完整 URL。"}})
             return
 
         auth = self.headers.get("Authorization", "")
@@ -529,7 +526,7 @@ class Handler(BaseHTTPRequestHandler):
             status = exc.code
             ctype = exc.headers.get("Content-Type", "application/json; charset=utf-8") if exc.headers else "application/json; charset=utf-8"
         except urlerror.URLError as exc:
-            self._send_json(502, {"error": {"message": "连接 TypeSafe 失败: %s" % exc.reason}})
+            self._send_json(502, {"error": {"message": "连接目标地址失败: %s" % exc.reason}})
             return
         except Exception as exc:  # noqa: BLE001
             self._send_json(502, {"error": {"message": "代理异常: %s" % exc}})
@@ -542,7 +539,7 @@ class Handler(BaseHTTPRequestHandler):
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(
         prog="server.py",
-        description="Jev Playground 本地服务（静态托管 + TypeSafe API 代理）。",
+        description="Jev Playground 本地服务（静态托管 + SystemOne API 代理）。",
     )
     ap.add_argument("-H", "--host", default=None,
                     help="监听地址，默认 127.0.0.1（也可用环境变量 HOST）")
@@ -562,7 +559,7 @@ def main():
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     url = "http://%s:%d" % (HOST if HOST != "0.0.0.0" else "localhost", PORT)
     print("Jev Playground 已启动 →  %s" % url)
-    print("代理接口: POST /api/systemone   (转发到 %s)" % DEFAULT_TARGET)
+    print("代理接口: POST /api/systemone   (默认转发到 %s)" % DEFAULT_TARGET)
     key, source = resolve_api_key("")
     if key:
         where = {"file": KEY_FILE_NAME, "env": ENV_KEY_NAME}.get(source, source or "?")
@@ -573,8 +570,6 @@ def main():
         print("运行记录: 已关闭 (JEV_LOG_DISABLE)")
     else:
         print("运行记录: 每次运行写入 %s" % LOG_FILE)
-    if ALLOW_ANY:
-        print("注意: JEV_ALLOW_ANY_HOST 已开启，可代理到任意地址。")
     print("按 Ctrl+C 停止。")
     try:
         server.serve_forever()
