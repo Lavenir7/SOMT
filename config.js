@@ -1,31 +1,42 @@
 /* ============================================================
- * Jev Playground 配置
- * ------------------------------------------------------------
- * 所有「上限」设置集中在这里。修改后刷新页面即可生效。
- *
- * 未列出的项会自动回退到 index.html 内置的默认值。
+ * SystemOne Playground 配置
  * ============================================================ */
-window.JEV_LIMITS = {
 
-  /* ---------- 左侧：State ---------- */
+/* ---------- 默认选中（对应 models.json 的 Provider 键与模型 id） ---------- */
+window.SO_CONFIG = {
+  provider: "typesafe",
+  model: "jev-latest"
+};
+
+/* ---------- 各项上限（自定义 Provider / Model 时使用） ---------- */
+window.SO_LIMITS = {
+
+  /* ---------- State ---------- */
   maxState: 10240,          // State 最大字符数（文本模式）
 
-  /* ---------- 左侧：Questions ---------- */
+  /* ---------- Questions ---------- */
   maxQuestions: 16,        // 最多问题数量
   maxInstructions: 300,    // 每个问题的 instructions 最大字符数
   maxQuestionLabel: 40,    // 问题标签（Q1、Q2 …）最大字符数
 
-  /* ---------- 问题类型：choice（选择） ---------- */
-  maxChoiceOptions: 128,   // 选项数量上限（Jev 模型上限为 255）
+  /* ---------- choice ---------- */
+  maxChoiceOptions: 128,   // 选项数量上限（自定义模型时使用；已知模型取 models.json 的值）
   maxOptionName: 80,       // 单个选项名最大字符数
   maxOptionDesc: 200,      // 单个选项描述最大字符数
 
-  /* ---------- 问题类型：score（评分） ---------- */
+  /* ---------- score ---------- */
   minScoreLevels: 2,       // 等级数量下限
-  maxScoreLevels: 10,      // 等级数量上限（TypeSafe API 上限为 10）
+  maxScoreLevels: 10,      // 等级数量上限（自定义模型时使用；已知模型取 models.json 的值）
   maxLevelText: 200,       // 单个等级描述最大字符数
 
-  /* ---------- 右侧：结果列表 ---------- */
+  /* ---------- 新增模型时的默认值 ---------- */
+  contextWindow: 32000,    // 上下文长度
+
+  /* ---------- 图片输入 ---------- */
+  maxImages: 8,            // 单次最多附加的图片数量
+  maxImageSize: 5242880,   // 单张图片最大字节数（5 MB）
+
+  /* ---------- 结果列表 ---------- */
   resultLimit: 10,         // 默认显示的结果条数，超出的自动隐藏
 
   /* ---------- 历史记录 ---------- */

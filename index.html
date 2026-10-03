@@ -9,7 +9,7 @@
 <script>
   (function () {
     try {
-      var pref = localStorage.getItem("jev.theme") || "system";
+      var pref = localStorage.getItem("so.theme") || "system";
       var dark = pref === "dark" || (pref === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
       document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
       document.documentElement.setAttribute("data-theme-pref", pref);
@@ -133,22 +133,33 @@
     font-size:10.5px;font-weight:700;color:var(--muted);
     text-transform:uppercase;letter-spacing:.06em;padding-left:2px;
   }
-  .field-ctl.url{flex:1 1 300px}
-  .field-ctl.model{flex:0 1 208px}
+  .field-ctl.provider{flex:1 1 190px}
+  .field-ctl.model{flex:1 1 200px}
   .field-ctl.key{flex:1 1 240px}
+  .pick-row{display:flex;align-items:center;gap:8px}
+  .pick-row select{flex:1 1 auto;min-width:0}
   .key-row{display:flex;gap:8px;align-items:center}
   .key-row input{flex:1;min-width:0}
+  .key-row select{flex:1 1 auto;min-width:0}
   .key-src{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;margin-left:4px;vertical-align:middle}
   .key-src .chip{font-size:10px;padding:2px 7px}
-  input[type=text],input[type=password],textarea{
+  input[type=text],input[type=password],input[type=number],textarea{
     width:100%;font-size:13px;color:var(--ink);background:var(--white);
     border:1px solid var(--line);border-radius:10px;padding:8px 11px;outline:none;
     transition:border-color .15s, box-shadow .15s;resize:vertical;
   }
-  input[type=text]:focus,input[type=password]:focus,textarea:focus{
+  input[type=text]:focus,input[type=password]:focus,input[type=number]:focus,textarea:focus{
     border-color:var(--focus);box-shadow:0 0 0 3px rgba(117,87,255,.14);
   }
   input::placeholder,textarea::placeholder{color:var(--placeholder)}
+
+  select{
+    width:100%;font-size:13px;color:var(--ink);background:var(--white);
+    border:1px solid var(--line);border-radius:10px;padding:8px 26px 8px 11px;outline:none;cursor:pointer;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  select:hover{border-color:var(--line-strong)}
+  select:focus{border-color:var(--focus);box-shadow:0 0 0 3px rgba(117,87,255,.14)}
 
   .top-actions{display:flex;align-items:center;gap:12px;padding-bottom:1px;margin-left:auto}
   .status{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);white-space:nowrap}
@@ -231,6 +242,21 @@
   html[data-state-mode="json"] textarea#stateInput{font-family:var(--mono);font-size:12.5px}
 
   .hint{font-size:11.5px;color:var(--muted);margin-top:8px}
+
+  /* ---------- 图片（多模态输入） ---------- */
+  .img-field{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)}
+  .img-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+  .img-head .spacer{flex:1}
+  .img-title{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .img-list{display:flex;flex-wrap:wrap;gap:8px}
+  .img-list:empty{display:none}
+  .img-item{position:relative;width:64px;height:64px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--paper)}
+  .img-item img{width:100%;height:100%;object-fit:cover;display:block}
+  .img-item .img-del{
+    position:absolute;top:3px;right:3px;width:18px;height:18px;padding:0;border:none;border-radius:50%;
+    background:rgba(0,0,0,.55);color:#fff;font-size:12px;line-height:1;cursor:pointer;display:grid;place-items:center;
+  }
+  .img-item .img-del:hover{background:var(--coral)}
 
   /* ---------- question cards ---------- */
   .q-list{display:flex;flex-direction:column;gap:12px}
@@ -485,6 +511,22 @@
   .import-help p{margin:0;font-size:11.5px;line-height:1.55;color:var(--muted)}
   .import-help code{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 4px}
   .modal-msg code{font-family:var(--mono);font-size:11px;background:var(--paper);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+
+  /* ---------- 添加 Provider 弹窗 ---------- */
+  .pv-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px}
+  .pv-field{display:flex;flex-direction:column;gap:4px;min-width:0}
+  .pv-field > span{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-left:2px}
+  .pv-models-head{display:flex;align-items:center;gap:8px;margin:14px 0 8px}
+  .pv-title{font-size:11.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .pv-models{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow:auto;padding-right:2px}
+  .pv-model{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--paper)}
+  .pv-model-head{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .pv-model-head .spacer{flex:1}
+  .pv-idx{font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+  .pv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
+  .pv-grid .pv-field.full{grid-column:1 / -1}
+  .pv-model input[type=text],.pv-model input[type=number]{padding:6px 9px;font-size:12.5px}
+  .pv-input{display:inline-flex;align-self:flex-start}
   .import-mode{display:flex;align-items:center;gap:10px;margin-top:12px}
   .import-mode-label{font-size:11.5px;font-weight:700;color:var(--muted)}
 
@@ -504,7 +546,7 @@
     .topbar.is-collapsed{padding-top:8px;padding-bottom:8px}
     .brand{width:100%;padding-bottom:0}
     .fields{flex:1 1 100%;gap:10px}
-    .field-ctl.url,.field-ctl.model,.field-ctl.key{flex:1 1 100%}
+    .field-ctl.provider,.field-ctl.model,.field-ctl.key{flex:1 1 100%}
     .top-actions{width:100%;margin-left:0;gap:8px;padding-bottom:0;flex-wrap:wrap}
     #runBtn{flex:1 1 auto;justify-content:center}
 
@@ -532,7 +574,7 @@
     .q-label-input{font-size:16px;max-width:100%}
 
     /* 避免 iOS 聚焦输入框时自动放大 */
-    input[type=text],input[type=password],textarea{font-size:16px}
+    input[type=text],input[type=password],input[type=number],textarea,select{font-size:16px}
     textarea#stateInput{min-height:130px;font-size:16px}
     html[data-state-mode="json"] textarea#stateInput{font-size:15px}
     #importText{font-size:16px;min-height:150px}
@@ -541,6 +583,7 @@
     .toast{width:100%;max-width:none}
     .modal-backdrop{padding:12px}
     .modal{padding:15px 14px 12px}
+    .pv-head,.pv-grid{grid-template-columns:1fr}
   }
 </style>
 </head>
@@ -555,19 +598,23 @@
     </div>
 
     <div class="fields">
-      <div class="field-ctl url">
-        <label for="apiUrl">API URL</label>
-        <input id="apiUrl" type="text" spellcheck="false" value="https://api.typesafe.ai/v1/systemone" />
+      <div class="field-ctl provider">
+        <label for="provider">Provider</label>
+        <div class="pick-row">
+          <select id="provider"></select>
+          <button type="button" class="btn btn-sm btn-danger is-hidden" id="providerDelBtn" title="删除自定义 Provider">删除</button>
+        </div>
       </div>
       <div class="field-ctl model">
         <label for="model">Model</label>
-        <input id="model" type="text" spellcheck="false" value="jev-latest" />
+        <select id="model"></select>
       </div>
       <div class="field-ctl key">
-        <label for="apiKey">API Key <span class="key-src" id="keySource"></span></label>
+        <label for="apiKeySel">API Key <span class="key-src" id="keySource"></span></label>
         <div class="key-row">
-          <input id="apiKey" type="password" spellcheck="false" placeholder="apikey_..." autocomplete="off" />
-          <button type="button" class="btn btn-sm" id="saveKeyBtn" title="保存到本地文件 systemone.apikey">保存</button>
+          <select id="apiKeySel"></select>
+          <input id="apiKey" type="password" class="is-hidden" spellcheck="false" placeholder="apikey_..." autocomplete="off" />
+          <button type="button" class="btn btn-sm is-hidden" id="saveKeyBtn" title="保存API KEY">保存</button>
         </div>
       </div>
     </div>
@@ -600,6 +647,20 @@
         <textarea id="stateInput"
           placeholder="需要判断的材料：一段文字、一封邮件、一条评论、一份记录 ..."></textarea>
         <div class="hint">State 可以是简单字符串，也可以是结构化 JSON 值</div>
+
+        <!-- 仅所选模型支持图片输入时显示 -->
+        <div class="img-field is-hidden" id="imgField">
+          <div class="img-head">
+            <span class="img-title">图片</span>
+            <span class="chip" id="imgCount">0 / 0</span>
+            <div class="spacer"></div>
+            <button type="button" class="btn btn-sm" id="imgPickBtn">＋ 添加图片</button>
+            <button type="button" class="btn btn-sm" id="imgClearBtn" disabled>清空</button>
+          </div>
+          <input type="file" id="imgInput" class="is-hidden" accept="image/png,image/jpeg,image/webp" multiple />
+          <div class="img-list" id="imgList"></div>
+          <div class="hint">支持 PNG / JPEG / WebP</div>
+        </div>
       </div>
 
       <div class="panel">
@@ -700,6 +761,33 @@ c:
     </div>
   </div>
 
+  <div class="modal-backdrop is-hidden" id="providerModal">
+    <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="providerModalTitle">
+      <div class="modal-title" id="providerModalTitle">添加 Provider</div>
+      <div class="pv-head">
+        <label class="pv-field">
+          <span>Provider Name</span>
+          <input id="pvName" type="text" spellcheck="false" placeholder="例如 my-provider" />
+        </label>
+        <label class="pv-field">
+          <span>baseUrl</span>
+          <input id="pvBaseUrl" type="text" spellcheck="false" placeholder="https://api.example.com/v1/systemone" />
+        </label>
+      </div>
+      <div class="pv-models-head">
+        <span class="pv-title">模型</span>
+        <div class="spacer"></div>
+        <span class="chip" id="pvModelCount">0 个模型</span>
+        <button type="button" class="btn btn-sm" id="pvAddModel">＋ 添加模型</button>
+      </div>
+      <div class="pv-models" id="pvModels"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="pvCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="pvSave">保存</button>
+      </div>
+    </div>
+  </div>
+
 <script>
 (function () {
   "use strict";
@@ -715,16 +803,19 @@ c:
     minScoreLevels: 2,
     maxScoreLevels: 10,
     maxLevelText: 200,
+    contextWindow: 32000,
+    maxImages: 8,
+    maxImageSize: 5242880,
     resultLimit: 20,
     historyLimit: 100
   };
-  const LIMITS = Object.assign({}, DEFAULT_LIMITS, (window.JEV_LIMITS || {}));
+  const LIMITS = Object.assign({}, DEFAULT_LIMITS, (window.SO_LIMITS || {}));
   const MAX_STATE = LIMITS.maxState;
   const MAX_INSTR = LIMITS.maxInstructions;
-  const MAX_QUESTIONS = LIMITS.maxQuestions;
-  const MAX_CHOICE_OPTIONS = LIMITS.maxChoiceOptions;
+  let MAX_QUESTIONS = LIMITS.maxQuestions;
+  let MAX_CHOICE_OPTIONS = LIMITS.maxChoiceOptions;
   const MIN_LEVELS = LIMITS.minScoreLevels;
-  const MAX_LEVELS = LIMITS.maxScoreLevels;
+  let MAX_LEVELS = LIMITS.maxScoreLevels;
 
   const TYPE_META = {
     noul:   { label: "是非", badge: "badge-noul",   desc: "回答「是 / 否」并给出概率，适合验证与判断。" },
@@ -734,7 +825,11 @@ c:
 
   const $ = (id) => document.getElementById(id);
   const el = {
-    apiUrl: $("apiUrl"), model: $("model"), apiKey: $("apiKey"),
+    apiUrl: $("apiUrl"), model: $("model"), apiKey: $("apiKey"), apiKeySel: $("apiKeySel"),
+    provider: $("provider"), providerDelBtn: $("providerDelBtn"),
+    providerModal: $("providerModal"), pvName: $("pvName"), pvBaseUrl: $("pvBaseUrl"),
+    pvModels: $("pvModels"), pvModelCount: $("pvModelCount"),
+    pvAddModel: $("pvAddModel"), pvCancel: $("pvCancel"), pvSave: $("pvSave"),
     topbar: document.querySelector(".topbar"), topbarToggle: $("topbarToggle"),
     stateInput: $("stateInput"), stateCounter: $("stateCounter"),
     stateMode: $("stateMode"),
@@ -752,11 +847,13 @@ c:
     importModal: $("importModal"), importText: $("importText"), importFile: $("importFile"),
     importPickBtn: $("importPickBtn"), importFileName: $("importFileName"),
     importMode: $("importMode"),
-    importOk: $("importOk"), importCancel: $("importCancel")
+    importOk: $("importOk"), importCancel: $("importCancel"),
+    imgField: $("imgField"), imgInput: $("imgInput"), imgPickBtn: $("imgPickBtn"),
+    imgClearBtn: $("imgClearBtn"), imgList: $("imgList"), imgCount: $("imgCount")
   };
 
   /* ============ theme (light / dark / system) ============ */
-  const THEME_KEY = "jev.theme";
+  const THEME_KEY = "so.theme";
   const darkMql = window.matchMedia("(prefers-color-scheme: dark)");
   let themePref = document.documentElement.getAttribute("data-theme-pref") || "system";
 
@@ -782,7 +879,7 @@ c:
   else if (darkMql.addListener) darkMql.addListener(onSystemThemeChange);
 
   /* ============ mobile topbar collapse ============ */
-  const TOPBAR_KEY = "jev.topbarCollapsed";
+  const TOPBAR_KEY = "so.topbarCollapsed";
   const isNarrow = () => window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
   let topbarCollapsed = false;
   try { topbarCollapsed = localStorage.getItem(TOPBAR_KEY) === "1"; } catch (e) {}
@@ -808,7 +905,7 @@ c:
     const splitter = el.splitter;
     if (!main || !splitter) return;
 
-    const KEY = "jev.splitFrac";
+    const KEY = "so.splitFrac";
     const MIN = 0.22, MAX = 0.82;
     let frac = 0.7;
     try {
@@ -863,37 +960,471 @@ c:
     });
   })();
 
-  /* ============ config persistence (key is intentionally not stored) ============ */
-  try {
-    const savedUrl = localStorage.getItem("jev.apiUrl");
-    const savedModel = localStorage.getItem("jev.model");
-    if (savedUrl) el.apiUrl.value = savedUrl;
-    if (savedModel) el.model.value = savedModel;
-  } catch (e) {}
-  el.apiUrl.addEventListener("change", () => { try { localStorage.setItem("jev.apiUrl", el.apiUrl.value.trim()); } catch (e) {} });
-  el.model.addEventListener("change", () => { try { localStorage.setItem("jev.model", el.model.value.trim()); } catch (e) {} });
+  /* ============ Provider / Model 目录（models.json + models-custom.json） ============ */
+  // 默认值：localStorage 优先，其次 config.js 的 window.SO_CONFIG
+  const SO_CONFIG = window.SO_CONFIG || {};
+  const ADD = "__add__";
+  const PROVIDER_KEY = "so.provider";
+  const MODEL_KEY = "so.model";
 
-  /* ============ proxy detection & server-side API key ============ */
-  let proxyAvailable = false;
-  let serverKey = { hasKey: false, source: null, keyHint: null };
+  let baseCatalog = {};      // models.json（内置，只读）
+  let customCatalog = {};    // models-custom.json（页面「添加 Provider」写入）
+  let MODELS = {};           // 合并后的目录
+  let providerId = "";
+  let modelId = "";
+  const lastModelByProvider = {};   // 记住每个 Provider 上次选中的 Model
 
-  function updateKeyUI() {
-    if (serverKey.hasKey) {
-      const where = serverKey.source === "file" ? "文件" : (serverKey.source === "env" ? "环境变量" : "服务端");
-      el.apiKey.placeholder = "已自动读取，留空即使用";
-      const hint = serverKey.keyHint || "";
-      el.keySource.innerHTML =
-        (hint ? '<span class="chip mint">' + escapeHtml(hint) + '</span>' : "") +
-        '<span class="chip">' + escapeHtml(where) + '</span>';
-    } else {
-      el.apiKey.placeholder = proxyAvailable ? "粘贴你的 API Key…（可保存到本地文件）" : "粘贴你的 API Key…";
-      el.keySource.textContent = "";
-    }
-    if (el.saveKeyBtn) el.saveKeyBtn.style.display = proxyAvailable ? "" : "none";
+  function readStored(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function writeStored(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); } catch (e) {} }
+
+  function providerEntry(pid) { return (pid && MODELS[pid]) || null; }
+  function providerIds() { return Object.keys(MODELS); }
+  function isCustomProvider(pid) { return !!(pid && customCatalog[pid]); }
+  function providerName(pid) {
+    const p = providerEntry(pid);
+    return (p && (p.name || p.label)) || pid;
+  }
+  function providerLabel(pid) {
+    return isCustomProvider(pid) ? (providerName(pid) + " · custom") : providerName(pid);
+  }
+  function modelsOf(pid) {
+    const p = providerEntry(pid);
+    return (p && Array.isArray(p.models)) ? p.models : [];
+  }
+  function modelMeta(pid, mid) {
+    const list = modelsOf(pid);
+    for (let i = 0; i < list.length; i++) { if (list[i] && list[i].id === mid) return list[i]; }
+    return null;
+  }
+  function modelLabel(m) { return (m && (m.name || m.id)) || ""; }
+  function baseUrlOf(pid) {
+    const p = providerEntry(pid);
+    return (p && typeof p.baseUrl === "string") ? p.baseUrl.trim() : "";
   }
 
-  function safeUpdateKeyUI() {
-    try { updateKeyUI(); } catch (e) { if (window.console) console.error("updateKeyUI failed:", e); }
+  function currentApiUrl() { return providerId ? baseUrlOf(providerId) : ""; }
+  function currentModelId() { return modelId; }
+
+  function rebuildCatalog() {
+    MODELS = {};
+    Object.keys(baseCatalog).forEach((k) => { MODELS[k] = baseCatalog[k]; });
+    Object.keys(customCatalog).forEach((k) => { MODELS[k] = customCatalog[k]; });
+  }
+
+  function fillProviderSelect() {
+    const sel = el.provider;
+    if (!sel) return;
+    sel.innerHTML = "";
+    providerIds().forEach((pid) => {
+      const o = document.createElement("option");
+      o.value = pid;
+      o.textContent = providerLabel(pid);
+      sel.appendChild(o);
+    });
+    const add = document.createElement("option");
+    add.value = ADD;
+    add.textContent = "＋ 添加 Provider";
+    sel.appendChild(add);
+    if (!providerEntry(providerId)) providerId = providerIds()[0] || "";
+    sel.value = providerId;
+    if (sel.value !== providerId) { providerId = providerIds()[0] || ""; sel.value = providerId; }
+  }
+
+  function fillModelSelect() {
+    const sel = el.model;
+    if (!sel) return;
+    sel.innerHTML = "";
+    const list = modelsOf(providerId);
+    list.forEach((m) => {
+      if (!m || !m.id) return;
+      const o = document.createElement("option");
+      o.value = m.id;
+      o.textContent = modelLabel(m);          // 仅显示模型的 name
+      sel.appendChild(o);
+    });
+    if (!list.length) modelId = "";
+    else if (!modelMeta(providerId, modelId)) modelId = list[0].id;
+    sel.value = modelId;
+    if (sel.value !== modelId) { modelId = ""; sel.value = ""; }
+  }
+
+  function syncPickers() {
+    // 自定义 Provider 才显示删除按钮
+    if (el.providerDelBtn) el.providerDelBtn.classList.toggle("is-hidden", !isCustomProvider(providerId));
+    syncImageField();   // 图片区随模型的输入模态显示 / 隐藏
+  }
+
+  function persistPickers() {
+    writeStored(PROVIDER_KEY, providerId);
+    writeStored(MODEL_KEY, modelId);
+  }
+
+  function limitNum(v, fallback) {
+    const n = Number(v);
+    return (isFinite(n) && n > 0) ? Math.floor(n) : fallback;
+  }
+
+  // 已选模型 -> 使用其目录中的上限；否则回退到 config.js 的上限
+  function applyModelLimits() {
+    const meta = modelMeta(providerId, modelId);
+    const q = limitNum(meta && meta.maxQuestions, LIMITS.maxQuestions);
+    const o = limitNum(meta && meta.maxChoiceOptions, LIMITS.maxChoiceOptions);
+    const l = Math.max(MIN_LEVELS, limitNum(meta && meta.maxScoreLevels, LIMITS.maxScoreLevels));
+    const changed = (q !== MAX_QUESTIONS || o !== MAX_CHOICE_OPTIONS || l !== MAX_LEVELS);
+    MAX_QUESTIONS = q; MAX_CHOICE_OPTIONS = o; MAX_LEVELS = l;
+    if (changed) renderQuestions(); else updateQCount();
+  }
+
+  function refreshCatalogUI() {
+    fillProviderSelect();
+    fillModelSelect();
+    syncPickers();
+    persistPickers();
+    applyModelLimits();
+    loadProviderKeys(providerId);   // API Key 列表随 Provider 变化
+  }
+
+  function onProviderChange() {
+    const next = el.provider ? el.provider.value : "";
+    if (next === ADD) {                       // 「添加 Provider」：弹窗后恢复原选中项
+      el.provider.value = providerId;
+      openProviderModal();
+      return;
+    }
+    if (next !== providerId) lastModelByProvider[providerId] = modelId;
+    providerId = next;
+    const list = modelsOf(next);
+    const remembered = lastModelByProvider[next];
+    if (!list.length) modelId = "";
+    else if (remembered && modelMeta(next, remembered)) modelId = remembered;
+    else modelId = list[0].id;
+    fillModelSelect();
+    syncPickers();
+    persistPickers();
+    applyModelLimits();
+    loadProviderKeys(providerId);
+  }
+
+  function onModelChange() {
+    modelId = el.model ? el.model.value : "";
+    syncPickers();
+    persistPickers();
+    applyModelLimits();
+  }
+
+  // 载入历史记录时恢复模型：找不到就尝试在其他 Provider 中查找
+  function selectModelFromRecord(mid) {
+    mid = String(mid || "").trim();
+    if (!mid) return;
+    if (!modelMeta(providerId, mid)) {
+      const pids = providerIds();
+      for (let i = 0; i < pids.length; i++) {
+        if (modelMeta(pids[i], mid)) { providerId = pids[i]; break; }
+      }
+    }
+    if (modelMeta(providerId, mid)) modelId = mid;
+    refreshCatalogUI();
+  }
+
+  function loadCatalog() {
+    return fetch("models.json", { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .then((d) => { baseCatalog = (d && typeof d === "object" && !Array.isArray(d)) ? d : {}; })
+      .catch((e) => { baseCatalog = {}; if (window.console) console.warn("加载 models.json 失败：", e); })
+      .then(() => fetch("/api/models-custom", { cache: "no-store" }))
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .catch((e) => { if (window.console) console.warn("加载 models-custom.json 失败：", e); return {}; })
+      .then((d) => { customCatalog = (d && typeof d === "object" && !Array.isArray(d)) ? d : {}; rebuildCatalog(); });
+  }
+
+  function initCatalog() {
+    providerId = readStored(PROVIDER_KEY) || String(SO_CONFIG.provider || "");
+    modelId = readStored(MODEL_KEY) || String(SO_CONFIG.model || "");
+
+    if (el.provider) el.provider.addEventListener("change", onProviderChange);
+    if (el.model) el.model.addEventListener("change", onModelChange);
+    if (el.providerDelBtn) {
+      el.providerDelBtn.addEventListener("click", () => { if (isCustomProvider(providerId)) deleteProvider(providerId); });
+    }
+    if (el.pvAddModel) el.pvAddModel.addEventListener("click", () => addPvModel({}));
+    if (el.pvCancel) el.pvCancel.addEventListener("click", closeProviderModal);
+    if (el.pvSave) el.pvSave.addEventListener("click", saveProviderModal);
+    if (el.providerModal) {
+      el.providerModal.addEventListener("click", (e) => { if (e.target === el.providerModal) closeProviderModal(); });
+    }
+
+    loadCatalog().then(refreshCatalogUI);
+  }
+
+  /* ============ 添加 Provider 弹窗 ============ */
+  let pvSeq = 0;
+
+  function openProviderModal() {
+    if (!el.providerModal) return;
+    if (el.pvName) el.pvName.value = "";
+    if (el.pvBaseUrl) el.pvBaseUrl.value = "";
+    if (el.pvModels) el.pvModels.innerHTML = "";
+    pvSeq = 0;
+    addPvModel({});
+    el.providerModal.classList.remove("is-hidden");
+    try { if (el.pvName) el.pvName.focus(); } catch (e) {}
+  }
+
+  function closeProviderModal() {
+    if (el.providerModal) el.providerModal.classList.add("is-hidden");
+  }
+
+  function pvModelRows() {
+    return el.pvModels ? [].slice.call(el.pvModels.querySelectorAll(".pv-model")) : [];
+  }
+
+  function updatePvCount() {
+    const rows = pvModelRows();
+    rows.forEach((r, i) => {
+      const idx = r.querySelector(".pv-idx");
+      if (idx) idx.textContent = "#" + (i + 1);
+    });
+    if (el.pvModelCount) el.pvModelCount.textContent = rows.length + " 个模型";
+    const only = rows.length <= 1;
+    rows.forEach((r) => {
+      const del = r.querySelector(".pv-del");
+      if (del) del.disabled = only;
+    });
+  }
+
+  function addPvModel(prefill) {
+    if (!el.pvModels) return;
+    prefill = prefill || {};
+    pvSeq += 1;
+    const chosen = Array.isArray(prefill.input) ? prefill.input.map((x) => String(x).toLowerCase()) : ["text"];
+    const seg = ["text", "image"].map((k) => {
+      const on = chosen.indexOf(k) >= 0 || (k === "text" && !chosen.length);
+      return '<button type="button" data-val="' + k + '"' + (on ? ' class="active"' : "") + ">" +
+        (k === "text" ? "Text" : "Image") + "</button>";
+    }).join("");
+
+    const row = document.createElement("div");
+    row.className = "pv-model";
+    row.innerHTML =
+      '<div class="pv-model-head">' +
+        '<span class="pv-idx"></span>' +
+        '<div class="spacer"></div>' +
+        '<button type="button" class="btn btn-sm btn-danger pv-del" title="删除该模型">删除</button>' +
+      "</div>" +
+      '<div class="pv-grid">' +
+        '<label class="pv-field"><span>Model id</span><input type="text" spellcheck="false" data-k="id" /></label>' +
+        '<label class="pv-field"><span>Model name</span><input type="text" spellcheck="false" data-k="name" /></label>' +
+        '<div class="pv-field full"><span>input</span><div class="seg pv-input">' + seg + "</div></div>" +
+        '<label class="pv-field"><span>cost</span><input type="number" step="any" min="0" data-k="cost" /></label>' +
+        '<label class="pv-field"><span>contextWindow</span><input type="number" min="0" data-k="contextWindow" /></label>' +
+        '<label class="pv-field"><span>maxQuestions</span><input type="number" min="1" data-k="maxQuestions" /></label>' +
+        '<label class="pv-field"><span>maxChoiceOptions</span><input type="number" min="1" data-k="maxChoiceOptions" /></label>' +
+        '<label class="pv-field"><span>maxScoreLevels</span><input type="number" min="1" data-k="maxScoreLevels" /></label>' +
+      "</div>";
+
+    const setVal = (k, v) => {
+      const n = row.querySelector('[data-k="' + k + '"]');
+      if (n && v !== undefined && v !== null) n.value = v;
+    };
+    setVal("id", prefill.id || "");
+    setVal("name", prefill.name || "");
+    setVal("cost", prefill.cost !== undefined ? prefill.cost : 0);
+    setVal("contextWindow", limitNum(prefill.contextWindow, LIMITS.contextWindow));
+    setVal("maxQuestions", limitNum(prefill.maxQuestions, LIMITS.maxQuestions));
+    setVal("maxChoiceOptions", limitNum(prefill.maxChoiceOptions, LIMITS.maxChoiceOptions));
+    setVal("maxScoreLevels", limitNum(prefill.maxScoreLevels, LIMITS.maxScoreLevels));
+
+    const del = row.querySelector(".pv-del");
+    if (del) {
+      del.addEventListener("click", () => {
+        if (pvModelRows().length <= 1) { toast("至少保留一个模型", true); return; }
+        row.remove();
+        updatePvCount();
+      });
+    }
+    const inputSeg = row.querySelector(".pv-input");
+    if (inputSeg) {
+      inputSeg.addEventListener("click", (e) => {
+        const b = e.target.closest("button[data-val]");
+        if (!b) return;
+        const actives = inputSeg.querySelectorAll("button.active");
+        if (b.classList.contains("active") && actives.length <= 1) return;   // 至少保留一项
+        b.classList.toggle("active");
+      });
+    }
+
+    el.pvModels.appendChild(row);
+    updatePvCount();
+  }
+
+  function collectPvModel(row) {
+    const str = (k) => { const n = row.querySelector('[data-k="' + k + '"]'); return n ? String(n.value || "").trim() : ""; };
+    const num = (k, d) => { const s = str(k); if (s === "") return d; const n = Number(s); return (isFinite(n) && n >= 0) ? n : d; };
+    const input = [].map.call(row.querySelectorAll(".pv-input button.active"), (b) => b.dataset.val);
+    const id = str("id");
+    return {
+      id: id,
+      name: str("name") || id,
+      input: input.length ? input : ["text"],
+      cost: num("cost", 0),
+      contextWindow: num("contextWindow", LIMITS.contextWindow),
+      maxQuestions: Math.max(1, num("maxQuestions", LIMITS.maxQuestions)),
+      maxChoiceOptions: Math.max(1, num("maxChoiceOptions", LIMITS.maxChoiceOptions)),
+      maxScoreLevels: Math.max(MIN_LEVELS, num("maxScoreLevels", LIMITS.maxScoreLevels))
+    };
+  }
+
+  function saveProviderModal() {
+    const name = el.pvName ? el.pvName.value.trim() : "";
+    const baseUrl = el.pvBaseUrl ? el.pvBaseUrl.value.trim() : "";
+    if (!name) { toast("请填写 Provider Name", true); if (el.pvName) el.pvName.focus(); return; }
+    if (providerEntry(name)) { toast("Provider 已存在：" + name, true); if (el.pvName) el.pvName.focus(); return; }
+    if (!baseUrl) { toast("请填写 baseUrl", true); if (el.pvBaseUrl) el.pvBaseUrl.focus(); return; }
+    if (!/^https?:\/\//i.test(baseUrl)) { toast("baseUrl 需以 http:// 或 https:// 开头", true); if (el.pvBaseUrl) el.pvBaseUrl.focus(); return; }
+    const rows = pvModelRows();
+    if (!rows.length) { toast("请至少添加一个模型", true); return; }
+    const models = rows.map(collectPvModel);
+    const seen = {};
+    for (let i = 0; i < models.length; i++) {
+      if (!models[i].id) { toast("第 " + (i + 1) + " 个模型缺少 Model id", true); return; }
+      if (seen[models[i].id]) { toast("Model id 重复：" + models[i].id, true); return; }
+      seen[models[i].id] = true;
+    }
+    if (!proxyAvailable) { toast("请先运行本地服务（python server.py）再保存", true); return; }
+
+    const config = { name: name, baseUrl: baseUrl, models: models };
+    if (el.pvSave) el.pvSave.disabled = true;
+    fetch("/api/models-custom", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "save", provider: name, config: config })
+    })
+      .then(readJsonOrThrow)
+      .then((d) => {
+        customCatalog = (d && d.custom) || {};
+        rebuildCatalog();
+        providerId = name;
+        modelId = "";
+        refreshCatalogUI();
+        closeProviderModal();
+        toast("已保存 Provider：" + name);
+      })
+      .catch((e) => toast("保存失败：" + e.message, true))
+      .finally(() => { if (el.pvSave) el.pvSave.disabled = false; });
+  }
+
+  function deleteProvider(pid) {
+    const label = providerLabel(pid);
+    askConfirm("删除自定义 Provider", "确定删除「" + label + "」吗？", "删除")
+      .then((ok) => {
+        if (!ok) return;
+        fetch("/api/models-custom", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "delete", provider: pid })
+        })
+          .then(readJsonOrThrow)
+          .then((d) => {
+            customCatalog = (d && d.custom) || {};
+            rebuildCatalog();
+            if (!providerEntry(providerId)) providerId = providerIds()[0] || "";
+            refreshCatalogUI();
+            toast("已删除 Provider：" + label);
+          })
+          .catch((e) => toast("删除失败：" + e.message, true));
+      });
+  }
+
+  function readJsonOrThrow(r) {
+    return r.text().then((txt) => {
+      let d = null;
+      try { d = txt ? JSON.parse(txt) : null; } catch (e) {}
+      if (!r.ok) throw new Error(pickErrorMessage(d) || ("HTTP " + r.status));
+      return d || {};
+    });
+  }
+
+  /* ============ proxy detection & API Key（apikey.json，按 Provider 分组） ============ */
+  let proxyAvailable = false;
+  let serverConfig = null;
+
+  const KEY_MANUAL = "__manual__";
+  let providerKeys = [];          // 当前 Provider 的 Key 提示：[{hint, len}]
+  let keyMode = "manual";         // "stored" | "manual"
+  let keyIndex = -1;
+  const keyChoice = {};           // 记住每个 Provider 的选择
+
+  function saveKeyChoice() {
+    if (providerId) keyChoice[providerId] = { mode: keyMode, index: keyIndex };
+  }
+
+  function loadProviderKeys(provider) {
+    providerKeys = [];
+    keyMode = "manual"; keyIndex = -1;
+    if (!proxyAvailable || !provider) { renderKeyUI(); return Promise.resolve(); }
+    return fetch("/api/keys?provider=" + encodeURIComponent(provider), { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .then((d) => { providerKeys = (d && Array.isArray(d.keys)) ? d.keys : []; })
+      .catch((e) => {
+        providerKeys = [];
+        if (window.console) console.warn("加载 apikey.json 失败:", e);
+      })
+      .then(() => {
+        const c = keyChoice[provider];
+        if (c && c.mode === "manual") { keyMode = "manual"; keyIndex = -1; }
+        else if (providerKeys.length) {
+          keyMode = "stored";
+          keyIndex = (c && typeof c.index === "number" && c.index >= 0 && c.index < providerKeys.length) ? c.index : 0;
+        }
+        renderKeyUI();
+      });
+  }
+
+  function renderKeyUI() {
+    const sel = el.apiKeySel;
+    if (!sel) return;
+
+    sel.innerHTML = "";
+    providerKeys.forEach((k, i) => {
+      const o = document.createElement("option");
+      o.value = String(i);
+      o.textContent = (k && k.hint) || ("key " + (i + 1));
+      sel.appendChild(o);
+    });
+    const mo = document.createElement("option");
+    mo.value = KEY_MANUAL;
+    mo.textContent = "填写";
+    sel.appendChild(mo);
+
+    // 没有可用 Key 时自动切换到「填写」
+    if (!providerKeys.length) { keyMode = "manual"; keyIndex = -1; }
+    else if (keyMode === "stored" && (keyIndex < 0 || keyIndex >= providerKeys.length)) keyIndex = 0;
+    sel.value = (keyMode === "manual") ? KEY_MANUAL : String(keyIndex);
+
+    const manual = keyMode === "manual";
+    sel.classList.toggle("is-hidden", manual);
+    if (el.apiKey) {
+      el.apiKey.classList.toggle("is-hidden", !manual);
+      el.apiKey.placeholder = proxyAvailable ? "粘贴 API Key…（可保存）" : "粘贴 API Key…";
+    }
+    if (el.saveKeyBtn) el.saveKeyBtn.classList.toggle("is-hidden", !manual);
+
+    if (el.keySource) {
+      el.keySource.innerHTML = providerKeys.length
+        ? '<span class="chip mint">apikey.json</span><span class="chip">' + providerKeys.length + " 个</span>"
+        : '<span class="chip">' + (proxyAvailable ? "未配置" : "直连") + "</span>";
+    }
+  }
+
+  if (el.apiKeySel) {
+    el.apiKeySel.addEventListener("change", () => {
+      const v = el.apiKeySel.value;
+      if (v === KEY_MANUAL) { keyMode = "manual"; keyIndex = -1; }
+      else { keyMode = "stored"; keyIndex = Number(v) || 0; }
+      saveKeyChoice();
+      renderKeyUI();
+      if (keyMode === "manual" && el.apiKey) el.apiKey.focus();
+    });
   }
 
   fetch("/api/health", { cache: "no-store" })
@@ -901,37 +1432,43 @@ c:
     .then((d) => {
       proxyAvailable = !!(d && d.ok);
       setProxyStatus(proxyAvailable ? "代理已连接" : "直连模式", proxyAvailable ? "ok" : "warn");
-      if (!proxyAvailable) { safeUpdateKeyUI(); return; }
+      if (!proxyAvailable) { renderKeyUI(); return; }
       return fetch("/api/config", { cache: "no-store" })
         .then((r) => r.ok ? r.json() : null)
-        .then((cfg) => { if (cfg) serverKey = cfg; })
+        .then((cfg) => { if (cfg) serverConfig = cfg; })
         .catch((e) => { if (window.console) console.error("load /api/config failed:", e); })
-        .then(() => { safeUpdateKeyUI(); loadHistory(); });
+        .then(() => loadProviderKeys(providerId))
+        .then(() => { loadHistory(); });
     })
     .catch((e) => {
       if (window.console) console.error("proxy detection failed:", e);
       setProxyStatus("直连模式（可能受 CORS 限制）", "bad");
-      safeUpdateKeyUI();
+      renderKeyUI();
     });
 
   if (el.saveKeyBtn) {
     el.saveKeyBtn.addEventListener("click", () => {
-      const key = el.apiKey.value.trim();
-      if (!key) { toast("请先在上方填写要保存的 API Key"); el.apiKey.focus(); return; }
+      const key = el.apiKey ? el.apiKey.value.trim() : "";
+      if (!key) { toast("请填写要保存的 API Key", true); if (el.apiKey) el.apiKey.focus(); return; }
+      if (!providerId) { toast("请选择 Provider", true); return; }
+      if (!proxyAvailable) { toast("请运行本地服务（python server.py）再保存", true); return; }
       el.saveKeyBtn.disabled = true;
-      fetch("/api/apikey", {
+      fetch("/api/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ apiKey: key })
+        body: JSON.stringify({ provider: providerId, key: key })
       })
-        .then((r) => r.json().then((d) => { if (!r.ok) throw new Error(pickErrorMessage(d) || ("HTTP " + r.status)); return d; }))
+        .then(readJsonOrThrow)
         .then((d) => {
-          serverKey = d || { hasKey: true, source: "file", keyHint: null };
-          el.apiKey.value = "";
-          updateKeyUI();
-          toast("已保存到 systemone.apikey");
+          providerKeys = (d && Array.isArray(d.keys)) ? d.keys : providerKeys;
+          if (el.apiKey) el.apiKey.value = "";
+          keyMode = "stored";
+          keyIndex = (d && typeof d.index === "number") ? d.index : 0;
+          saveKeyChoice();
+          renderKeyUI();
+          toast("API KEY 已保存");
         })
-        .catch((e) => toast("保存失败：" + e.message, true))
+        .catch((e) => toast("API KEY 保存失败：" + e.message, true))
         .finally(() => { el.saveKeyBtn.disabled = false; });
     });
   }
@@ -969,12 +1506,128 @@ c:
     document.documentElement.setAttribute("data-state-mode", mode);
     el.stateInput.placeholder = mode === "json"
       ? '{\n  "message": "My card was charged twice.",\n  "order_id": "A-104"\n}'
-      : "把你希望 Jev 判断的材料放进来：一段文字、一封邮件、一条评论、一份记录……";
+      : "把你希望 SystemOne 判断的材料放进来：一段文字、一封邮件、一条评论、一份记录……";
   }
   el.stateMode.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-mode]");
     if (btn) setStateMode(btn.dataset.mode);
   });
+
+  /* ============ 图片（多模态模型的输入） ============ */
+  const MAX_IMAGES = LIMITS.maxImages;
+  const MAX_IMAGE_SIZE = LIMITS.maxImageSize;
+  const IMAGE_MIMES = ["image/png", "image/jpeg", "image/webp"];
+  let images = [];        // { id, name, mime, size, url, base64 }
+  let imgSeq = 0;
+
+  // models.json 中该模型的 input 模态包含图片时才启用
+  function modelSupportsImages(pid, mid) {
+    const meta = (pid && mid) ? modelMeta(pid, mid) : null;
+    if (!meta) return false;
+    const list = meta.input || meta.inputs || meta.modalities;
+    if (!Array.isArray(list)) return false;
+    return list.some((m) => {
+      const s = String(m || "").toLowerCase();
+      return s.indexOf("image") === 0 || s === "vision";
+    });
+  }
+  function imageEnabled() { return modelSupportsImages(providerId, modelId); }
+
+  function formatBytes(n) {
+    if (!isFinite(n) || n <= 0) return "0 B";
+    if (n < 1024) return n + " B";
+    if (n < 1048576) return (n / 1024).toFixed(0) + " KB";
+    return (n / 1048576).toFixed(1) + " MB";
+  }
+
+  function updateImageUI() {
+    if (el.imgCount) el.imgCount.textContent = images.length + " / " + MAX_IMAGES;
+    if (el.imgClearBtn) el.imgClearBtn.disabled = images.length === 0;
+    if (el.imgPickBtn) el.imgPickBtn.disabled = images.length >= MAX_IMAGES;
+    if (!el.imgList) return;
+    el.imgList.innerHTML = "";
+    images.forEach((im) => {
+      const box = document.createElement("div");
+      box.className = "img-item";
+      box.title = im.name + " · " + formatBytes(im.size);
+      const thumb = document.createElement("img");
+      thumb.src = im.url;
+      thumb.alt = im.name;
+      const del = document.createElement("button");
+      del.type = "button";
+      del.className = "img-del";
+      del.textContent = "×";
+      del.title = "移除";
+      del.addEventListener("click", () => {
+        images = images.filter((x) => x.id !== im.id);
+        updateImageUI();
+      });
+      box.appendChild(thumb);
+      box.appendChild(del);
+      el.imgList.appendChild(box);
+    });
+  }
+
+  function syncImageField() {
+    const on = imageEnabled();
+    if (el.imgField) el.imgField.classList.toggle("is-hidden", !on);
+    updateImageUI();
+  }
+
+  function addImageFile(file) {
+    return new Promise((resolve) => {
+      const mime = String(file.type || "").toLowerCase();
+      if (IMAGE_MIMES.indexOf(mime) < 0) { toast("仅支持 PNG / JPEG / WebP 图片：" + file.name, true); resolve(false); return; }
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast("图片过大（" + formatBytes(file.size) + "）：" + file.name, true);
+        resolve(false);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = String(reader.result || "");
+        const comma = url.indexOf(",");
+        if (comma < 0) { toast("读取图片失败：" + file.name, true); resolve(false); return; }
+        imgSeq += 1;
+        images.push({
+          id: "img_" + imgSeq,
+          name: file.name || ("image-" + imgSeq),
+          mime: mime,
+          size: file.size,
+          url: url,
+          base64: url.slice(comma + 1)      // 去掉 data URL 前缀
+        });
+        resolve(true);
+      };
+      reader.onerror = () => { toast("读取图片失败：" + file.name, true); resolve(false); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function readImageFiles(files) {
+    const list = [].slice.call(files || []);
+    if (!list.length) return;
+    const room = MAX_IMAGES - images.length;
+    if (room <= 0) { toast("最多添加 " + MAX_IMAGES + " 张图片", true); return; }
+    if (list.length > room) toast("最多添加 " + MAX_IMAGES + " 张图片，已忽略多余的 " + (list.length - room) + " 张", true);
+    list.slice(0, room).reduce((p, f) => p.then(() => addImageFile(f)), Promise.resolve())
+      .then(() => updateImageUI());
+  }
+
+  if (el.imgPickBtn && el.imgInput) {
+    el.imgPickBtn.addEventListener("click", () => {
+      if (images.length >= MAX_IMAGES) { toast("最多添加 " + MAX_IMAGES + " 张图片", true); return; }
+      el.imgInput.value = "";
+      el.imgInput.click();
+    });
+    el.imgInput.addEventListener("change", () => {
+      readImageFiles(el.imgInput.files);
+      el.imgInput.value = "";
+    });
+  }
+  if (el.imgClearBtn) {
+    el.imgClearBtn.addEventListener("click", () => { images = []; updateImageUI(); });
+  }
 
   /* ============ questions ============ */
   let questions = [];
@@ -1434,21 +2087,35 @@ c:
   el.runBtn.addEventListener("click", run);
   document.addEventListener("keydown", (e) => {
     const confirmOpen = el.modal && !el.modal.classList.contains("is-hidden");
+    const providerOpen = el.providerModal && !el.providerModal.classList.contains("is-hidden");
     const importOpen = el.importModal && !el.importModal.classList.contains("is-hidden");
     if (e.key === "Escape") {
       if (confirmOpen) { closeModal(false); return; }
+      if (providerOpen) { closeProviderModal(); return; }
       if (importOpen) { closeImportModal(); return; }
     }
-    if (!confirmOpen && !importOpen && (e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); run(); }
+    if (!confirmOpen && !providerOpen && !importOpen && (e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); run(); }
   });
 
   function run() {
-    const apiUrl = el.apiUrl.value.trim();
-    const apiKey = el.apiKey.value.trim();
-    const model = el.model.value.trim() || "jev-latest";
+    const apiUrl = currentApiUrl();
+    const apiKey = el.apiKey ? el.apiKey.value.trim() : "";
+    const model = currentModelId();
 
-    if (!apiUrl) { toast("请填写 API URL", true); return; }
-    if (!apiKey && !serverKey.hasKey) { toast("请填写 API Key，或将其保存到 systemone.apikey", true); el.apiKey.focus(); return; }
+    if (!apiUrl) {
+      toast("Provider「" + providerLabel(providerId) + "」缺少 baseUrl", true);
+      return;
+    }
+    if (!model) { toast("请选择模型", true); return; }
+
+    // 使用 apikey.json 中的 Key，还是页面上手填的 Key
+    const useStored = (keyMode === "stored" && keyIndex >= 0 && keyIndex < providerKeys.length);
+    const keyRef = useStored ? { provider: providerId, index: keyIndex } : null;
+    if (!useStored && !apiKey) {
+      toast("请选择 API Key", true);
+      if (keyMode === "manual" && el.apiKey) el.apiKey.focus();
+      return;
+    }
     if (!questions.length) { toast("请至少添加一个问题", true); return; }
 
     // state
@@ -1499,18 +2166,21 @@ c:
       } else {
         const levels = q.score.map((s) => (s || "").trim()).filter(Boolean);
         if (levels.length < MIN_LEVELS) { toast("问题「" + key + "」至少需要 " + MIN_LEVELS + " 个等级", true); return; }
+        if (levels.length > MAX_LEVELS) { toast("问题「" + key + "」最多 " + MAX_LEVELS + " 个等级", true); return; }
         map[key] = { type: "score", instructions: instr, criteria: levels };
       }
     }
 
     const payload = { model: model, state: state, questions: map };
+    // 模型支持图片且已导入时，按顺序附带 base64 图片（不带 data URL 前缀）
+    if (imageEnabled() && images.length) payload.images = images.map((im) => im.base64);
     const orderedKeys = questions.map((q) => ({ id: q.id, key: keyById[q.id], label: (q.label || "").trim() || keyById[q.id], type: q.type }));
 
     setLoading(true);
-    callApi(apiUrl, apiKey, payload)
+    callApi(apiUrl, useStored ? "" : apiKey, payload, keyRef)
       .then((out) => {
         renderRun(out.data, orderedKeys, model, payload, undefined, out.logId);
-        toast("Jev 已返回结果");
+        toast("SystemOne 已返回结果");
         focusResultsOnMobile();
       })
       .catch((err) => {
@@ -1536,14 +2206,18 @@ c:
       : '<span class="play">▶</span> 运行';
   }
 
-  function callApi(apiUrl, apiKey, payload) {
+  function callApi(apiUrl, apiKey, payload, keyRef) {
     const body = JSON.stringify(payload);
     const headers = { "Content-Type": "application/json" };
     let url;
     if (proxyAvailable) {
       url = "/api/systemone";
       if (apiKey) headers["Authorization"] = "Bearer " + apiKey;
-      headers["X-Jev-Url"] = apiUrl;
+      headers["X-SO-Url"] = apiUrl;
+      if (keyRef && typeof keyRef.index === "number" && keyRef.index >= 0) {
+        headers["X-SO-Provider"] = keyRef.provider;
+        headers["X-SO-Key-Index"] = String(keyRef.index);
+      }
     } else {
       url = apiUrl;
       headers["Authorization"] = "Bearer " + apiKey;
@@ -1564,7 +2238,7 @@ c:
         }
         if (!data) throw new Error("返回内容不是合法 JSON");
         let logId = null;
-        try { logId = r.headers.get("X-Jev-Log-Id"); } catch (e) {}
+        try { logId = r.headers.get("X-SO-Log-Id"); } catch (e) {}
         return { data: data, logId: logId };
       });
     }).catch((e) => {
@@ -1824,7 +2498,7 @@ c:
     let content, filename, mime;
     if (recs.length === 1) {
       content = JSON.stringify(recs[0], null, 2);
-      filename = "jev-run-" + (recs[0].id || stamp()) + ".json";
+      filename = "systemone-run-" + (recs[0].id || stamp()) + ".json";
       mime = "application/json";
     } else {
       content = recs.map(function (r) { return JSON.stringify(r); }).join("\n") + "\n";
@@ -1878,7 +2552,7 @@ c:
   }
 
   function applyRecordAsTemplate(rec) {
-    if (rec.model_requested) el.model.value = rec.model_requested;
+    if (rec.model_requested) selectModelFromRecord(rec.model_requested);
 
     const st = rec.state;
     if (typeof st === "string") { setStateMode("text"); el.stateInput.value = st; }
@@ -2319,6 +2993,7 @@ c:
     return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   }
 
+  initCatalog();
   updateQCount();
 })();
 </script>

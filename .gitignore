@@ -1,6 +1,8 @@
 *.apikey
+apikey.json
 
 run-log.jsonl
+models-custom.json
 
 __pycache__/
 *.pyc

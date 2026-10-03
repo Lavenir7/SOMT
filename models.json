@@ -1,0 +1,74 @@
+{
+  "typesafe": {
+    "name": "TypeSafe",
+    "baseUrl": "https://api.typesafe.ai/v1/systemone",
+    "models": [
+      {
+        "id": "jev-latest",
+        "name": "Jev",
+        "input": ["text"],
+        "cost": 0.042,
+        "contextWindow": 32000,
+        "maxQuestions": 64,
+        "maxChoiceOptions": 255,
+        "maxScoreLevels": 10
+      }
+    ]
+  },
+  "ollama": {
+    "name": "Ollama",
+    "baseUrl": "http://localhost:11434/v1/systemone",
+    "models": [
+      {
+        "id": "tev1:0.8b",
+        "name": "tev1:0.8b",
+        "input": ["text"],
+        "cost": 0,
+        "contextWindow": 2048,
+        "maxQuestions": 64,
+        "maxChoiceOptions": 26,
+        "maxScoreLevels": 26
+      },
+      {
+        "id": "tev1",
+        "name": "tev1",
+        "input": ["text"],
+        "cost": 0,
+        "contextWindow": 32768,
+        "maxQuestions": 64,
+        "maxChoiceOptions": 26,
+        "maxScoreLevels": 26
+      },
+      {
+        "id": "nimble",
+        "name": "nimble",
+        "input": ["text"],
+        "cost": 0,
+        "contextWindow": 262144,
+        "maxQuestions": 64,
+        "maxChoiceOptions": 26,
+        "maxScoreLevels": 26
+      },
+      {
+        "id": "clef-flash",
+        "name": "clef-flash",
+        "input": ["text", "image"],
+        "cost": 0,
+        "contextWindow": 65536, 
+        "maxQuestions": 64,
+        "maxChoiceOptions": 26,
+        "maxScoreLevels": 26
+      },
+      {
+        "id": "clef",
+        "name": "clef",
+        "input": ["text", "image"],
+        "cost": 0,
+        "contextWindow": 65536, 
+        "maxQuestions": 64,
+        "maxChoiceOptions": 26,
+        "maxScoreLevels": 26
+      }
+    ]
+  }
+}
