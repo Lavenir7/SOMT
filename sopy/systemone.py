@@ -11,6 +11,16 @@ class SystemOne:
             "models": [
                 "jev-latest",
             ]
+        },
+        "ollama": {
+            "baseUrl": "http://localhost:11434/v1/systemone",
+            "models": [
+                "tev1:0.8b",
+                "tev1",
+                "nimble",
+                "clef-flash",
+                "clef"
+            ]
         }
     }
 
@@ -88,11 +98,11 @@ class SystemOne:
         for question in self.questions:
             self.check_question(self.questions[question])
 
-    def addq(self, question: str, instructions: str, qtype: str, criteria: list[str]|dict = None) -> bool:
+    def addq(self, question: str, qtype: str, instructions: str, criteria: list[str]|dict = None) -> bool:
         '''
         question: 问题标签；
-        instructions: 问题描述；
         qtype: 问题类型，可选 noul（是非），choice（选择），score（评分）；
+        instructions: 问题描述；
         criteria: 问题选项：
                 type=choice 时，criteria 为 dict，key 为选项，value 为选项描述；
                 type=score 时，criteria 为 长度大于 1 的 list，元素按从低到高的顺序排列，每个元素描述一个等级。
@@ -114,7 +124,7 @@ class SystemOne:
         self.questions[question] = question_v
         return True
 
-    def print_answers(self) -> None:
+    def printans(self) -> None:
         '''
         输出结果。
         '''
