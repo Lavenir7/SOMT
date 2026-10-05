@@ -706,20 +706,19 @@
         </div>
         <textarea id="stateInput"
           placeholder="需要判断的材料：一段文字、一封邮件、一条评论、一份记录 ..."></textarea>
-        <div class="hint">State 可以是简单字符串，也可以是结构化 JSON 值</div>
 
         <!-- 仅所选模型支持图片输入时显示 -->
         <div class="img-field is-hidden" id="imgField">
           <div class="img-head">
             <span class="img-title">图片</span>
-            <span class="chip" id="imgCount">0 / 0</span>
+            <code><span class="chip">PNG / JPEG / WebP</span></code>
             <div class="spacer"></div>
+            <span class="chip" id="imgCount">0 / 0</span>
             <button type="button" class="btn btn-sm" id="imgPickBtn">＋ 添加图片</button>
             <button type="button" class="btn btn-sm" id="imgClearBtn" disabled>清空</button>
           </div>
           <input type="file" id="imgInput" class="is-hidden" accept="image/png,image/jpeg,image/webp" multiple />
           <div class="img-list" id="imgList"></div>
-          <div class="hint">支持 PNG / JPEG / WebP</div>
         </div>
       </div>
 
