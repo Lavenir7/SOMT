@@ -50,6 +50,8 @@ HOST=0.0.0.0 PORT=9000 python server.py
 
 - `models.json`：**Provider / Model** 配置；
 
+- `models-custom.json`：自定义 Provider / Model 配置；
+
 - **环境变量**：
 
 ```bash

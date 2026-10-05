@@ -1,5 +1,6 @@
 *.apikey
 apikey.json
+apikey-custom.json
 
 run-log.jsonl
 models-custom.json

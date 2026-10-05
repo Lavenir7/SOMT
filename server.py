@@ -14,7 +14,7 @@ SystemOne Playground 本地服务。
 
 API Key 优先级：请求头 > apikey.json[provider][index] > systemone.apikey > 环境变量 TYPESAFE_API_KEY。
 
-apikey.json 按 Provider 分组存多个 Key：
+apikey.json 按 Provider 分组存多个 Key（apikey-custom.json 存自定义 Provider 的 Key）：
     {"typesafe": ["key1", "key2"], "ollama": [], "provider3": []}
 
 只依赖 Python 标准库，直接运行：
@@ -38,10 +38,16 @@ model/answers/usage + 状态码/耗时）都会追加写入 run-log.jsonl（每�
 可通过 GET /api/logs?limit=20 查看最近记录。
 
 其他接口：
-    GET  /api/keys?provider=<name>  当前 Provider 的 Key 列表（仅返回打码提示）
-    POST /api/keys                  {"provider": ..., "key": ...} 新增加一个 Key
+    GET  /api/keys?provider=<name>[&full=1]   该 Provider 的 Key 列表（默认仅返回打码提示）
+    POST /api/keys                  {"action":"add"|"update"|"delete", "provider": ...,
+                                     "key": ..., "index": ...}
     GET  /api/models-custom         自定义 Provider（models-custom.json）
-    POST /api/models-custom         {"action":"save"|"delete", "provider": ..., "config": {...}}
+    POST /api/models-custom         {"action":"save", "provider": ..., "original": ...,
+                                     "config": {...}, "apiKey": ...}
+                                     {"action":"delete", "provider": ...}
+
+自定义 Provider 的 Key 单独存在 apikey-custom.json，删除/改名时同步处理；
+其 Key 与 apikey.json 中的 Key 合并后一起提供给页面选择。
 """
 
 import argparse
@@ -70,9 +76,12 @@ KEY_FILE = os.path.join(HERE, "systemone.apikey")
 KEY_FILE_NAME = "systemone.apikey"
 ENV_KEY_NAME = "TYPESAFE_API_KEY"
 
-# 按 Provider 分组的 API Key
+# API Key：apikey.json 存用户自建 Provider 的 Key，apikey-custom.json 存自定义 Provider 的 Key
+# 格式均为 {"typesafe": ["key1", "key2"], ...}
 APIKEYS_FILE = os.path.join(HERE, "apikey.json")
 APIKEYS_NAME = "apikey.json"
+APIKEYS_CUSTOM_FILE = os.path.join(HERE, "apikey-custom.json")
+APIKEYS_CUSTOM_NAME = "apikey-custom.json"
 
 # 自定义 Provider：页面「添加 Provider」写入的文件（格式与 models.json 一致）
 MODELS_FILE = os.path.join(HERE, "models.json")
@@ -171,7 +180,7 @@ def resolve_api_key(header_auth: str, provider=None, index=None):
     if token:
         return token, "request"
     if provider and index is not None:
-        keys = read_apikeys().get(provider) or []
+        keys = provider_keys(provider)
         if 0 <= index < len(keys):
             return keys[index], "apikey.json"
         return None, None
@@ -184,15 +193,15 @@ def resolve_api_key(header_auth: str, provider=None, index=None):
     return None, None
 
 
-def read_apikeys():
-    """读取 apikey.json；文件缺失或损坏时返回 {}。"""
+def read_keys_file(path, label):
+    """读取 Key 文件；文件缺失或损坏时返回 {}。"""
     try:
-        with open(APIKEYS_FILE, "r", encoding="utf-8") as fh:
+        with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
     except FileNotFoundError:
         return {}
     except Exception as exc:  # noqa: BLE001
-        sys.stderr.write("[so] 读取 %s 失败: %s\n" % (APIKEYS_NAME, exc))
+        sys.stderr.write("[so] 读取 %s 失败: %s\n" % (label, exc))
         return {}
     if not isinstance(data, dict):
         return {}
@@ -205,12 +214,35 @@ def read_apikeys():
     return out
 
 
-def write_apikeys(data):
-    tmp = APIKEYS_FILE + ".tmp"
+def write_keys_file(path, data):
+    tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
         json.dump(data, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
-    os.replace(tmp, APIKEYS_FILE)
+    os.replace(tmp, path)
+
+
+def read_apikeys():
+    return read_keys_file(APIKEYS_FILE, APIKEYS_NAME)
+
+
+def write_apikeys(data):
+    write_keys_file(APIKEYS_FILE, data)
+
+
+def read_apikeys_custom():
+    return read_keys_file(APIKEYS_CUSTOM_FILE, APIKEYS_CUSTOM_NAME)
+
+
+def write_apikeys_custom(data):
+    write_keys_file(APIKEYS_CUSTOM_FILE, data)
+
+
+def provider_keys(provider):
+    """provider 的全部 Key：先 apikey.json，后 apikey-custom.json（顺序固定）。"""
+    if not provider:
+        return []
+    return list(read_apikeys().get(provider) or []) + list(read_apikeys_custom().get(provider) or [])
 
 
 def mask_key(key):
@@ -390,6 +422,7 @@ class Handler(BaseHTTPRequestHandler):
                 "keyHint": mask_key(key),
                 "keyFile": KEY_FILE_NAME,
                 "apikeyFile": APIKEYS_NAME,
+                "apikeyCustomFile": APIKEYS_CUSTOM_NAME,
                 "logFile": LOG_FILE_NAME,
                 "logEnabled": not LOG_DISABLED,
             })
@@ -579,6 +612,21 @@ class Handler(BaseHTTPRequestHandler):
     def _keys_allowed(self):
         return is_loopback(self.client_address[0]) or ALLOW_REMOTE_KEY_WRITE
 
+    def _keys_target_file(self, provider):
+        """自定义 Provider 的 Key 存 apikey-custom.json，其余存 apikey.json。"""
+        if provider in self._read_models_custom():
+            return APIKEYS_CUSTOM_FILE, APIKEYS_CUSTOM_NAME
+        return APIKEYS_FILE, APIKEYS_NAME
+
+    def _keys_payload(self, keys, full):
+        out = []
+        for k in keys:
+            item = {"hint": mask_key(k), "len": len(k)}
+            if full:
+                item["key"] = k
+            out.append(item)
+        return out
+
     def _get_apikeys(self):
         if not self._keys_allowed():
             self._send_json(403, {"error": {"message": "仅允许本机查看 API Key 列表"}})
@@ -586,23 +634,30 @@ class Handler(BaseHTTPRequestHandler):
         query = urlparse(self.path).query
         params = dict(p.split("=", 1) for p in query.split("&") if "=" in p)
         provider = unquote(params.get("provider", ""))
-        all_keys = read_apikeys()
+        full = params.get("full", "") not in ("", "0", "false")
         if provider:
-            keys = all_keys.get(provider) or []
+            _, name = self._keys_target_file(provider)
+            keys = provider_keys(provider)
             self._send_json(200, {
                 "ok": True,
                 "provider": provider,
-                "file": APIKEYS_NAME,
-                "keys": [{"hint": mask_key(k), "len": len(k)} for k in keys],
+                "file": name,
+                "keys": self._keys_payload(keys, full),
             })
             return
+        counts = {}
+        for src in (read_apikeys(), read_apikeys_custom()):
+            for k, v in src.items():
+                counts[k] = counts.get(k, 0) + len(v)
         self._send_json(200, {
             "ok": True,
             "file": APIKEYS_NAME,
-            "providers": {name: len(keys) for name, keys in all_keys.items()},
+            "customFile": APIKEYS_CUSTOM_NAME,
+            "providers": counts,
         })
 
     def _save_apikeys(self):
+        """action: add（默认）/ update / delete；index 为合并后的下标。"""
         if not self._keys_allowed():
             self._send_json(403, {"error": {"message": "仅允许本机写入 API Key"}})
             return
@@ -619,33 +674,84 @@ class Handler(BaseHTTPRequestHandler):
         if not isinstance(data, dict):
             self._send_json(400, {"error": {"message": "请求体必须是 JSON 对象"}})
             return
+
+        action = (data.get("action") or "add").strip()
         provider = str(data.get("provider") or "").strip()
-        key = str(data.get("key") or "").strip()
         if not provider:
             self._send_json(400, {"error": {"message": "缺少 provider"}})
             return
-        if not key:
-            self._send_json(400, {"error": {"message": "缺少 key"}})
+        if action not in ("add", "update", "delete"):
+            self._send_json(400, {"error": {"message": "未知 action: %s" % action}})
             return
-        all_keys = read_apikeys()
-        keys = all_keys.get(provider) or []
-        if key in keys:
-            index = keys.index(key)
+
+        user_keys = read_apikeys().get(provider) or []
+        merged = provider_keys(provider)
+
+        if action == "add":
+            key = str(data.get("key") or "").strip()
+            if not key:
+                self._send_json(400, {"error": {"message": "缺少 key"}})
+                return
+            if key in merged:
+                index = merged.index(key)
+                target_name = self._keys_target_file(provider)[1]
+            else:
+                target_file, target_name = self._keys_target_file(provider)
+                store = read_apikeys_custom() if target_file == APIKEYS_CUSTOM_FILE else read_apikeys()
+                keys = store.get(provider) or []
+                keys.append(key)
+                store[provider] = keys
+                try:
+                    write_keys_file(target_file, store)
+                except OSError as exc:
+                    self._send_json(500, {"error": {"message": "写入失败: %s" % exc}})
+                    return
+                merged = merged + [key]
+                index = len(merged) - 1
         else:
-            keys.append(key)
-            all_keys[provider] = keys
             try:
-                write_apikeys(all_keys)
+                index = int(data.get("index"))
+            except (TypeError, ValueError):
+                index = -1
+            if not (0 <= index < len(merged)):
+                self._send_json(404, {"error": {"message": "未找到该 API Key（index=%s）" % data.get("index")}})
+                return
+            if index < len(user_keys):
+                target_file, target_name = APIKEYS_FILE, APIKEYS_NAME
+                store, local = read_apikeys(), index
+            else:
+                target_file, target_name = APIKEYS_CUSTOM_FILE, APIKEYS_CUSTOM_NAME
+                store, local = read_apikeys_custom(), index - len(user_keys)
+            keys = store.get(provider) or []
+            if action == "update":
+                key = str(data.get("key") or "").strip()
+                if not key:
+                    self._send_json(400, {"error": {"message": "缺少 key"}})
+                    return
+                if key != merged[index] and key in merged:
+                    self._send_json(409, {"error": {"message": "该 API Key 已存在"}})
+                    return
+                keys[local] = key
+                merged[index] = key
+            else:
+                keys.pop(local)
+                merged.pop(index)
+                index = -1
+                if not keys:
+                    store.pop(provider, None)
+            try:
+                write_keys_file(target_file, store)
             except OSError as exc:
                 self._send_json(500, {"error": {"message": "写入失败: %s" % exc}})
                 return
-            index = len(keys) - 1
+
         self._send_json(200, {
             "ok": True,
             "provider": provider,
+            "action": action,
             "index": index,
-            "file": APIKEYS_NAME,
-            "keys": [{"hint": mask_key(k), "len": len(k)} for k in keys],
+            "file": target_name,
+            "keys": self._keys_payload(merged, False),
         })
 
     # -- custom providers ----------------------------------------------------
@@ -667,6 +773,32 @@ class Handler(BaseHTTPRequestHandler):
             fh.write("\n")
         os.replace(tmp, MODELS_CUSTOM_FILE)
 
+    def _drop_custom_keys(self, provider):
+        """删除 apikey-custom.json 中该 Provider 的 Key；返回错误信息或 None。"""
+        keys_all = read_apikeys_custom()
+        if provider not in keys_all:
+            return None
+        keys_all.pop(provider, None)
+        try:
+            write_apikeys_custom(keys_all)
+        except OSError as exc:
+            return "删除 %s 中的 Key 失败: %s" % (APIKEYS_CUSTOM_NAME, exc)
+        return None
+
+    def _save_custom_key(self, provider, key):
+        """把 key 写入 apikey-custom.json[provider]（已存在则不重复写）。返回 (keyIndex, error)。"""
+        keys_all = read_apikeys_custom()
+        keys = keys_all.get(provider) or []
+        if key not in keys:
+            keys.append(key)
+            keys_all[provider] = keys
+            try:
+                write_apikeys_custom(keys_all)
+            except OSError as exc:
+                return -1, "写入 %s 失败: %s" % (APIKEYS_CUSTOM_NAME, exc)
+        merged = provider_keys(provider)
+        return (merged.index(key) if key in merged else -1), None
+
     def _save_models_custom(self):
         if not is_loopback(self.client_address[0]) and not ALLOW_REMOTE_MODEL_WRITE:
             self._send_json(403, {"error": {"message": "仅允许本机修改自定义 Provider"}})
@@ -686,7 +818,7 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         action = (data.get("action") or "save").strip()
-        name = (data.get("provider") or "").strip()
+        name = str(data.get("provider") or "").strip()
         if not name:
             self._send_json(400, {"error": {"message": "缺少 provider"}})
             return
@@ -698,17 +830,28 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json(404, {"error": {"message": "未找到自定义 Provider: %s" % name}})
                 return
             custom.pop(name, None)
+            warn = self._drop_custom_keys(name)
             try:
                 self._write_models_custom(custom)
             except OSError as exc:
                 self._send_json(500, {"error": {"message": "写入失败: %s" % exc}})
                 return
-            self._send_json(200, {"ok": True, "deleted": name, "custom": custom})
+            sys.stderr.write("[so] 删除自定义 Provider: %s（%s）\n" % (name, warn or "Key 已一并删除"))
+            self._send_json(200, {"ok": True, "deleted": name, "custom": custom, "warning": warn})
             return
 
         if action != "save":
             self._send_json(400, {"error": {"message": "未知 action: %s" % action}})
             return
+
+        # 编辑时允许改名：original 为原 Provider 名
+        original = str(data.get("original") or "").strip()
+        if original and original != name:
+            if original not in custom:
+                self._send_json(404, {"error": {"message": "未找到自定义 Provider: %s" % original}})
+                return
+            custom.pop(original, None)
+            self._drop_custom_keys(original)
 
         # 不允许覆盖 models.json 中的内置 Provider
         builtin = {}
@@ -735,7 +878,27 @@ class Handler(BaseHTTPRequestHandler):
         except OSError as exc:
             self._send_json(500, {"error": {"message": "写入失败: %s" % exc}})
             return
-        self._send_json(200, {"ok": True, "provider": name, "custom": custom})
+
+        api_key = str(data.get("apiKey") or "").strip()
+        key_index = -1
+        warn = None
+        if api_key:
+            key_index, warn = self._save_custom_key(name, api_key)
+        sys.stderr.write("[so] 保存自定义 Provider: %s%s（%s: %d 个 Key）\n" % (
+            name,
+            "（原名 %s）" % original if (original and original != name) else "",
+            APIKEYS_CUSTOM_NAME, len(provider_keys(name))))
+        if warn:
+            sys.stderr.write("[so] %s\n" % warn)
+        self._send_json(200, {
+            "ok": True,
+            "provider": name,
+            "original": original or name,
+            "keyIndex": key_index,
+            "warning": warn,
+            "custom": custom,
+            "keys": self._keys_payload(provider_keys(name), False),
+        })
 
     # -- API proxy -----------------------------------------------------------
     def _proxy(self):

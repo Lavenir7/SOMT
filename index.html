@@ -138,9 +138,40 @@
   .field-ctl.key{flex:1 1 240px}
   .pick-row{display:flex;align-items:center;gap:8px}
   .pick-row select{flex:1 1 auto;min-width:0}
-  .key-row{display:flex;gap:8px;align-items:center}
-  .key-row input{flex:1;min-width:0}
-  .key-row select{flex:1 1 auto;min-width:0}
+
+  /* ---------- Provider 自定义下拉（自定义条目右侧带编辑 / 删除） ---------- */
+  .dd{position:relative;flex:1 1 auto;min-width:0}
+  .dd-native{position:absolute;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;pointer-events:none}
+  .dd-trigger{
+    display:flex;align-items:center;gap:8px;width:100%;text-align:left;cursor:pointer;
+    padding:8px 11px;border:1px solid var(--line);border-radius:10px;background:var(--white);
+    color:var(--ink);font:inherit;font-size:13px;line-height:1.4;outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  .dd-trigger:hover{border-color:var(--line-strong)}
+  .dd-trigger:focus-visible,.dd-trigger[aria-expanded="true"]{border-color:var(--focus);box-shadow:0 0 0 3px rgba(117,87,255,.14)}
+  .dd-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dd-caret{flex:0 0 auto;font-size:10px;line-height:1;color:var(--muted)}
+  .dd-menu{
+    position:absolute;z-index:60;top:calc(100% + 5px);left:0;right:0;padding:4px;
+    max-height:300px;overflow:auto;border-radius:10px;background:var(--white);
+    border:1px solid var(--line);box-shadow:var(--shadow);
+  }
+  .dd-item{display:flex;align-items:center;gap:2px;padding:6px 4px 6px 10px;border-radius:7px;cursor:pointer;font-size:13px}
+  .dd-item:hover{background:var(--line-soft)}
+  .dd-item.is-active{background:var(--mint-pale);color:var(--badge-noul-fg);font-weight:600}
+  .dd-item-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dd-item .icon-btn{flex:0 0 auto;width:22px;height:22px;padding:0}
+  .dd-item .icon-btn svg{width:13px;height:13px;display:block}
+  .dd-empty{padding:7px 10px;font-size:12.5px;color:var(--muted)}
+  .add-btn{
+    flex:0 0 auto;width:36px;height:36px;padding:0;display:grid;place-items:center;
+    border:1px solid var(--line);border-radius:10px;background:var(--white);
+    color:var(--muted);font-size:18px;font-weight:600;line-height:1;cursor:pointer;
+    transition:border-color .15s, color .15s, background .15s, opacity .15s;
+  }
+  .add-btn:hover:not(:disabled){border-color:var(--mint);color:var(--mint-deep);background:var(--mint-pale)}
+  .add-btn:disabled{opacity:.35;cursor:not-allowed}
   .key-src{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;margin-left:4px;vertical-align:middle}
   .key-src .chip{font-size:10px;padding:2px 7px}
   input[type=text],input[type=password],input[type=number],textarea{
@@ -488,6 +519,7 @@
   @keyframes modalIn{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
   .modal-title{font-size:15px;font-weight:800;margin-bottom:8px}
   .modal-msg{font-size:13px;line-height:1.6;color:var(--muted);white-space:pre-wrap;margin-bottom:16px}
+  .modal-input{width:100%;margin:-8px 0 16px;font-family:var(--mono);font-size:12.5px}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px}
   /* 导入问题弹窗 */
   .modal-wide{width:min(660px,100%)}
@@ -525,6 +557,7 @@
   .pv-idx{font-size:11px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
   .pv-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
   .pv-grid .pv-field.full{grid-column:1 / -1}
+  .pv-head .pv-field.full{grid-column:1 / -1}
   .pv-model input[type=text],.pv-model input[type=number]{padding:6px 9px;font-size:12.5px}
   .pv-input{display:inline-flex;align-self:flex-start}
   .import-mode{display:flex;align-items:center;gap:10px;margin-top:12px}
@@ -571,6 +604,11 @@
     .run-actions{opacity:1;gap:0}
     .run-actions .act{padding:4px 8px}
     .icon-btn{width:30px;height:30px;font-size:15px}
+    .dd-trigger{font-size:16px}
+    .dd-item{font-size:15px}
+    .dd-item .icon-btn{width:30px;height:30px}
+    .dd-item .icon-btn svg{width:15px;height:15px}
+    .add-btn{width:38px;height:38px;font-size:19px}
     .q-label-input{font-size:16px;max-width:100%}
 
     /* 避免 iOS 聚焦输入框时自动放大 */
@@ -599,22 +637,44 @@
 
     <div class="fields">
       <div class="field-ctl provider">
-        <label for="provider">Provider</label>
+        <label for="providerTrigger">Provider</label>
         <div class="pick-row">
-          <select id="provider"></select>
-          <button type="button" class="btn btn-sm btn-danger is-hidden" id="providerDelBtn" title="删除自定义 Provider">删除</button>
+          <div class="dd" id="providerDd">
+            <select id="provider" class="dd-native" tabindex="-1" aria-hidden="true"></select>
+            <button type="button" class="dd-trigger" id="providerTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dd-label" id="providerLabel"></span>
+              <span class="dd-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="dd-menu is-hidden" id="providerMenu" role="listbox" aria-label="Provider"></div>
+          </div>
+          <button type="button" class="add-btn" id="providerAddBtn" title="添加 Provider" aria-label="添加 Provider">+</button>
         </div>
       </div>
       <div class="field-ctl model">
-        <label for="model">Model</label>
-        <select id="model"></select>
+        <label for="modelTrigger">Model</label>
+        <div class="pick-row">
+          <div class="dd" id="modelDd">
+            <select id="model" class="dd-native" tabindex="-1" aria-hidden="true"></select>
+            <button type="button" class="dd-trigger" id="modelTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dd-label" id="modelLabel"></span>
+              <span class="dd-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="dd-menu is-hidden" id="modelMenu" role="listbox" aria-label="Model"></div>
+          </div>
+          <button type="button" class="add-btn" id="modelAddBtn" title="添加模型" aria-label="添加模型">+</button>
+        </div>
       </div>
       <div class="field-ctl key">
-        <label for="apiKeySel">API Key <span class="key-src" id="keySource"></span></label>
-        <div class="key-row">
-          <select id="apiKeySel"></select>
-          <input id="apiKey" type="password" class="is-hidden" spellcheck="false" placeholder="apikey_..." autocomplete="off" />
-          <button type="button" class="btn btn-sm is-hidden" id="saveKeyBtn" title="保存API KEY">保存</button>
+        <label for="keyTrigger">API Key <span class="key-src" id="keySource"></span></label>
+        <div class="pick-row">
+          <div class="dd" id="keyDd">
+            <button type="button" class="dd-trigger" id="keyTrigger" aria-haspopup="listbox" aria-expanded="false">
+              <span class="dd-label" id="keyLabel"></span>
+              <span class="dd-caret" aria-hidden="true">▾</span>
+            </button>
+            <div class="dd-menu is-hidden" id="keyMenu" role="listbox" aria-label="API Key"></div>
+          </div>
+          <button type="button" class="add-btn" id="keyAddBtn" title="添加 API Key" aria-label="添加 API Key">+</button>
         </div>
       </div>
     </div>
@@ -706,6 +766,7 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-title" id="modalTitle">确认</div>
       <div class="modal-msg" id="modalMsg"></div>
+      <input type="text" class="modal-input is-hidden" id="modalInput" spellcheck="false" autocomplete="off" />
       <div class="modal-actions">
         <button type="button" class="btn" id="modalCancel">取消</button>
         <button type="button" class="btn btn-primary" id="modalOk">确定</button>
@@ -773,6 +834,10 @@ c:
           <span>baseUrl</span>
           <input id="pvBaseUrl" type="text" spellcheck="false" placeholder="https://api.example.com/v1/systemone" />
         </label>
+        <label class="pv-field full">
+          <span>API Key</span>
+          <input id="pvApiKey" type="text" spellcheck="false" autocomplete="off" placeholder="apikey" />
+        </label>
       </div>
       <div class="pv-models-head">
         <span class="pv-title">模型</span>
@@ -825,9 +890,11 @@ c:
 
   const $ = (id) => document.getElementById(id);
   const el = {
-    apiUrl: $("apiUrl"), model: $("model"), apiKey: $("apiKey"), apiKeySel: $("apiKeySel"),
-    provider: $("provider"), providerDelBtn: $("providerDelBtn"),
-    providerModal: $("providerModal"), pvName: $("pvName"), pvBaseUrl: $("pvBaseUrl"),
+    apiUrl: $("apiUrl"), model: $("model"),
+    provider: $("provider"), providerTrigger: $("providerTrigger"), providerLabel: $("providerLabel"), providerMenu: $("providerMenu"), providerAddBtn: $("providerAddBtn"),
+    modelTrigger: $("modelTrigger"), modelLabel: $("modelLabel"), modelMenu: $("modelMenu"), modelAddBtn: $("modelAddBtn"),
+    keyTrigger: $("keyTrigger"), keyLabel: $("keyLabel"), keyMenu: $("keyMenu"), keyAddBtn: $("keyAddBtn"),
+    providerModal: $("providerModal"), providerModalTitle: $("providerModalTitle"), pvName: $("pvName"), pvBaseUrl: $("pvBaseUrl"), pvApiKey: $("pvApiKey"),
     pvModels: $("pvModels"), pvModelCount: $("pvModelCount"),
     pvAddModel: $("pvAddModel"), pvCancel: $("pvCancel"), pvSave: $("pvSave"),
     topbar: document.querySelector(".topbar"), topbarToggle: $("topbarToggle"),
@@ -838,11 +905,10 @@ c:
     splitter: $("splitter"),
     proxyStatus: $("proxyStatus"), proxyText: $("proxyText"),
     themeSeg: $("themeSeg"),
-    saveKeyBtn: $("saveKeyBtn"), keySource: $("keySource"),
-    toast: $("toast"),
+    keySource: $("keySource"),    toast: $("toast"),
     selTools: $("selTools"), selectAllRuns: $("selectAllRuns"), logSelected: $("logSelected"),
     downloadSelBtn: $("downloadSelBtn"), deleteSelBtn: $("deleteSelBtn"),
-    modal: $("modal"), modalTitle: $("modalTitle"), modalMsg: $("modalMsg"),
+    modal: $("modal"), modalTitle: $("modalTitle"), modalMsg: $("modalMsg"), modalInput: $("modalInput"),
     modalOk: $("modalOk"), modalCancel: $("modalCancel"),
     importModal: $("importModal"), importText: $("importText"), importFile: $("importFile"),
     importPickBtn: $("importPickBtn"), importFileName: $("importFileName"),
@@ -963,7 +1029,6 @@ c:
   /* ============ Provider / Model 目录（models.json + models-custom.json） ============ */
   // 默认值：localStorage 优先，其次 config.js 的 window.SO_CONFIG
   const SO_CONFIG = window.SO_CONFIG || {};
-  const ADD = "__add__";
   const PROVIDER_KEY = "so.provider";
   const MODEL_KEY = "so.model";
 
@@ -987,6 +1052,164 @@ c:
   function providerLabel(pid) {
     return isCustomProvider(pid) ? (providerName(pid) + " · custom") : providerName(pid);
   }
+
+  /* ---------- 自定义下拉：Provider / Model / API Key ---------- */
+  const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>';
+  const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
+  // 自定义 Provider 的条目才带编辑 / 删除
+  function entryActionBtn(kind, label, handler) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "icon-btn dd-act" + (kind === "del" ? " danger" : "");
+    b.title = (kind === "del" ? "删除" : "编辑") + label;
+    b.setAttribute("aria-label", b.title);
+    b.innerHTML = kind === "del" ? ICON_TRASH : ICON_EDIT;
+    b.addEventListener("click", (e) => { e.stopPropagation(); closeAllMenus(); handler(); });
+    return b;
+  }
+
+  function menuRow(label, active) {
+    const row = document.createElement("div");
+    row.className = "dd-item" + (active ? " is-active" : "");
+    row.setAttribute("role", "option");
+    row.setAttribute("aria-selected", active ? "true" : "false");
+    const name = document.createElement("span");
+    name.className = "dd-item-label";
+    name.textContent = label;
+    row.appendChild(name);
+    return row;
+  }
+
+  function emptyRow(text) {
+    const row = document.createElement("div");
+    row.className = "dd-empty";
+    row.textContent = text;
+    return row;
+  }
+
+  const ddPairs = () => [
+    { t: el.providerTrigger, m: el.providerMenu, render: renderProviderMenu },
+    { t: el.modelTrigger, m: el.modelMenu, render: renderModelMenu },
+    { t: el.keyTrigger, m: el.keyMenu, render: renderKeyMenu }
+  ];
+
+  function closeAllMenus() {
+    ddPairs().forEach((p) => {
+      if (p.m) p.m.classList.add("is-hidden");
+      if (p.t) p.t.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  function openMenu(p) {
+    closeAllMenus();
+    p.render();
+    if (p.m) p.m.classList.remove("is-hidden");
+    if (p.t) p.t.setAttribute("aria-expanded", "true");
+  }
+
+  function bindDropdowns() {
+    ddPairs().forEach((p) => {
+      if (!p.t || !p.m) return;
+      p.t.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (p.m.classList.contains("is-hidden")) openMenu(p);
+        else closeAllMenus();
+      });
+      p.t.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") { e.preventDefault(); openMenu(p); }
+      });
+      p.m.addEventListener("click", (e) => e.stopPropagation());
+    });
+    document.addEventListener("click", closeAllMenus);
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAllMenus(); });
+  }
+
+  /* ---------- Provider 菜单 ---------- */
+  function renderProviderMenu() {
+    const menu = el.providerMenu;
+    if (!menu) return;
+    if (el.providerLabel) el.providerLabel.textContent = providerLabel(providerId);
+    menu.innerHTML = "";
+    providerIds().forEach((pid) => {
+      const row = menuRow(providerLabel(pid), pid === providerId);
+      if (isCustomProvider(pid)) {
+        row.appendChild(entryActionBtn("edit", "自定义 Provider", () => openProviderModal(pid)));
+        row.appendChild(entryActionBtn("del", "自定义 Provider", () => deleteProvider(pid)));
+      }
+      row.addEventListener("click", () => selectProvider(pid));
+      menu.appendChild(row);
+    });
+  }
+
+  function selectProvider(pid) {
+    closeAllMenus();
+    if (!pid || pid === providerId) return;
+    el.provider.value = pid;      // 与原生 select 保持同步
+    onProviderChange();
+  }
+
+  /* ---------- Model 菜单 ---------- */
+  function renderModelMenu() {
+    const menu = el.modelMenu;
+    if (!menu) return;
+    const list = modelsOf(providerId);
+    const custom = isCustomProvider(providerId);
+    if (el.modelLabel) el.modelLabel.textContent = modelLabel(modelMeta(providerId, modelId)) || "—";
+    menu.innerHTML = "";
+    if (!list.length) { menu.appendChild(emptyRow("（无模型）")); return; }
+    list.forEach((m) => {
+      const row = menuRow(modelLabel(m), m.id === modelId);
+      if (custom) {
+        const mid = m.id;
+        row.appendChild(entryActionBtn("edit", "模型", () => openProviderModal(providerId, { focusModel: mid })));
+        row.appendChild(entryActionBtn("del", "模型", () => deleteModel(mid)));
+      }
+      row.addEventListener("click", () => selectModel(m.id));
+      menu.appendChild(row);
+    });
+  }
+
+  function selectModel(mid) {
+    closeAllMenus();
+    if (!mid || mid === modelId) return;
+    el.model.value = mid;
+    onModelChange();
+  }
+
+  /* ---------- API Key 菜单 ---------- */
+  function renderKeyMenu() {
+    const menu = el.keyMenu;
+    if (!menu) return;
+    const custom = isCustomProvider(providerId);
+    const cur = (keyIndex >= 0 && providerKeys[keyIndex]) ? providerKeys[keyIndex] : null;
+    if (el.keyLabel) el.keyLabel.textContent = cur ? cur.hint : (providerKeys.length ? "—" : "未配置");
+    if (el.keySource) {
+      const file = custom ? "apikey-custom.json" : "apikey.json";
+      el.keySource.innerHTML = providerKeys.length
+        ? '<span class="chip mint">' + file + '</span><span class="chip">' + providerKeys.length + " 个</span>"
+        : '<span class="chip">' + (proxyAvailable ? "未配置" : "直连") + "</span>";
+    }
+    menu.innerHTML = "";
+    if (!providerKeys.length) { menu.appendChild(emptyRow("（未配置）")); return; }
+    providerKeys.forEach((k, i) => {
+      const row = menuRow(k.hint || ("key " + (i + 1)), i === keyIndex);
+      if (custom) {
+        row.appendChild(entryActionBtn("edit", "API Key", () => editApiKey(i)));
+        row.appendChild(entryActionBtn("del", "API Key", () => deleteApiKey(i)));
+      }
+      row.addEventListener("click", () => selectApiKey(i));
+      menu.appendChild(row);
+    });
+  }
+
+  function selectApiKey(i) {
+    closeAllMenus();
+    keyIndex = i;
+    if (providerId) keyChoice[providerId] = { index: i };
+    renderKeyMenu();
+  }
+
   function modelsOf(pid) {
     const p = providerEntry(pid);
     return (p && Array.isArray(p.models)) ? p.models : [];
@@ -1021,10 +1244,6 @@ c:
       o.textContent = providerLabel(pid);
       sel.appendChild(o);
     });
-    const add = document.createElement("option");
-    add.value = ADD;
-    add.textContent = "＋ 添加 Provider";
-    sel.appendChild(add);
     if (!providerEntry(providerId)) providerId = providerIds()[0] || "";
     sel.value = providerId;
     if (sel.value !== providerId) { providerId = providerIds()[0] || ""; sel.value = providerId; }
@@ -1049,8 +1268,19 @@ c:
   }
 
   function syncPickers() {
-    // 自定义 Provider 才显示删除按钮
-    if (el.providerDelBtn) el.providerDelBtn.classList.toggle("is-hidden", !isCustomProvider(providerId));
+    // 仅自定义 Provider 可增删模型 / API Key
+    const customP = isCustomProvider(providerId);
+    if (el.modelAddBtn) {
+      el.modelAddBtn.disabled = !customP;
+      el.modelAddBtn.title = customP ? "添加模型" : "仅自定义 Provider 可添加模型";
+    }
+    if (el.keyAddBtn) {
+      el.keyAddBtn.disabled = !customP;
+      el.keyAddBtn.title = customP ? "添加 API Key" : "仅自定义 Provider 可添加 API Key";
+    }
+    renderProviderMenu();
+    renderModelMenu();
+    renderKeyMenu();
     syncImageField();   // 图片区随模型的输入模态显示 / 隐藏
   }
 
@@ -1086,11 +1316,6 @@ c:
 
   function onProviderChange() {
     const next = el.provider ? el.provider.value : "";
-    if (next === ADD) {                       // 「添加 Provider」：弹窗后恢复原选中项
-      el.provider.value = providerId;
-      openProviderModal();
-      return;
-    }
     if (next !== providerId) lastModelByProvider[providerId] = modelId;
     providerId = next;
     const list = modelsOf(next);
@@ -1143,9 +1368,10 @@ c:
 
     if (el.provider) el.provider.addEventListener("change", onProviderChange);
     if (el.model) el.model.addEventListener("change", onModelChange);
-    if (el.providerDelBtn) {
-      el.providerDelBtn.addEventListener("click", () => { if (isCustomProvider(providerId)) deleteProvider(providerId); });
-    }
+    bindDropdowns();
+    if (el.providerAddBtn) el.providerAddBtn.addEventListener("click", () => openProviderModal());
+    if (el.modelAddBtn) el.modelAddBtn.addEventListener("click", () => openProviderModal(providerId, { addModel: true }));
+    if (el.keyAddBtn) el.keyAddBtn.addEventListener("click", () => addApiKey());
     if (el.pvAddModel) el.pvAddModel.addEventListener("click", () => addPvModel({}));
     if (el.pvCancel) el.pvCancel.addEventListener("click", closeProviderModal);
     if (el.pvSave) el.pvSave.addEventListener("click", saveProviderModal);
@@ -1159,15 +1385,63 @@ c:
   /* ============ 添加 Provider 弹窗 ============ */
   let pvSeq = 0;
 
-  function openProviderModal() {
+  let pvOriginal = "";     // 编辑时的原 Provider 名
+
+  function openProviderModal(pid, opt) {
     if (!el.providerModal) return;
-    if (el.pvName) el.pvName.value = "";
-    if (el.pvBaseUrl) el.pvBaseUrl.value = "";
+    opt = opt || {};
+    const edit = isCustomProvider(pid);
+    pvOriginal = edit ? pid : "";
+    const entry = edit ? (providerEntry(pid) || {}) : {};
+    if (el.providerModalTitle) el.providerModalTitle.textContent = edit ? "编辑 Provider" : "添加 Provider";
+    if (el.pvName) el.pvName.value = edit ? pid : "";
+    if (el.pvBaseUrl) el.pvBaseUrl.value = edit ? (entry.baseUrl || "") : "";
+    if (el.pvApiKey) el.pvApiKey.value = "apikey";     // 默认值
     if (el.pvModels) el.pvModels.innerHTML = "";
     pvSeq = 0;
-    addPvModel({});
+    const list = edit ? modelsOf(pid) : [];
+    if (list.length) list.forEach((m) => addPvModel(m));
+    let addedRow = null;
+    if (!list.length) addPvModel({});
+    else if (opt.addModel) addedRow = addPvModel({});
     el.providerModal.classList.remove("is-hidden");
-    try { if (el.pvName) el.pvName.focus(); } catch (e) {}
+    // 光标位置：指定模型 -> 新增的空模型行 -> Provider Name
+    let target = null;
+    let selectText = false;
+    if (opt.focusModel) {
+      const row = pvModelRows().filter((r) => {
+        const n = r.querySelector('[data-k="id"]');
+        return n && n.value === opt.focusModel;
+      })[0];
+      target = (row && row.querySelector('[data-k="id"]')) || null;
+      selectText = !!target;
+    } else if (addedRow) {
+      target = addedRow.querySelector('[data-k="id"]');
+      selectText = !!target;
+    }
+    try {
+      if (target) {
+        target.focus();
+        if (selectText && target.select) target.select();
+        target.scrollIntoView({ block: "nearest" });
+      } else if (el.pvName) {
+        el.pvName.focus();
+      }
+    } catch (e) {}
+    if (edit) loadCustomKeyForModal(pid);
+  }
+
+  // 编辑时把该 Provider 已保存的 Key 填回弹窗
+  function loadCustomKeyForModal(pid) {
+    if (!proxyAvailable || !pid) return;
+    fetch("/api/keys?provider=" + encodeURIComponent(pid) + "&full=1", { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .then((d) => {
+        if (pvOriginal !== pid || !el.pvApiKey) return;   // 弹窗已切换
+        const keys = (d && Array.isArray(d.keys)) ? d.keys.filter((k) => k && k.key) : [];
+        if (keys.length) el.pvApiKey.value = keys[0].key;
+      })
+      .catch((e) => { if (window.console) console.warn("读取自定义 Provider 的 Key 失败:", e); });
   }
 
   function closeProviderModal() {
@@ -1255,6 +1529,7 @@ c:
 
     el.pvModels.appendChild(row);
     updatePvCount();
+    return row;
   }
 
   function collectPvModel(row) {
@@ -1277,8 +1552,9 @@ c:
   function saveProviderModal() {
     const name = el.pvName ? el.pvName.value.trim() : "";
     const baseUrl = el.pvBaseUrl ? el.pvBaseUrl.value.trim() : "";
+    const apiKey = el.pvApiKey ? el.pvApiKey.value.trim() : "";
     if (!name) { toast("请填写 Provider Name", true); if (el.pvName) el.pvName.focus(); return; }
-    if (providerEntry(name)) { toast("Provider 已存在：" + name, true); if (el.pvName) el.pvName.focus(); return; }
+    if (name !== pvOriginal && providerEntry(name)) { toast("Provider 已存在：" + name, true); if (el.pvName) el.pvName.focus(); return; }
     if (!baseUrl) { toast("请填写 baseUrl", true); if (el.pvBaseUrl) el.pvBaseUrl.focus(); return; }
     if (!/^https?:\/\//i.test(baseUrl)) { toast("baseUrl 需以 http:// 或 https:// 开头", true); if (el.pvBaseUrl) el.pvBaseUrl.focus(); return; }
     const rows = pvModelRows();
@@ -1297,20 +1573,61 @@ c:
     fetch("/api/models-custom", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "save", provider: name, config: config })
+      body: JSON.stringify({ action: "save", provider: name, original: pvOriginal || name, config: config, apiKey: apiKey })
     })
       .then(readJsonOrThrow)
       .then((d) => {
         customCatalog = (d && d.custom) || {};
         rebuildCatalog();
-        providerId = name;
+        const saved = (d && d.provider) || name;
+        providerId = saved;
         modelId = "";
+        if (d && typeof d.keyIndex === "number" && d.keyIndex >= 0) keyChoice[saved] = { mode: "stored", index: d.keyIndex };
         refreshCatalogUI();
         closeProviderModal();
-        toast("已保存 Provider：" + name);
+        toast("已保存 Provider：" + saved);
+        if (d && d.warning) toast(d.warning, true);
       })
       .catch((e) => toast("保存失败：" + e.message, true))
       .finally(() => { if (el.pvSave) el.pvSave.disabled = false; });
+  }
+
+  // 从自定义 Provider 里删掉一个模型（不走 API Key 字段，避免动到已有的 Key）
+  function deleteModel(mid) {
+    const prov = providerId;
+    if (!isCustomProvider(prov)) { toast("仅自定义 Provider 可修改模型", true); return; }
+    if (!proxyAvailable) { toast("请先运行本地服务（python server.py）", true); return; }
+    const models = modelsOf(prov);
+    const meta = modelMeta(prov, mid);
+    const label = (meta && (meta.name || meta.id)) || mid;
+    if (models.length <= 1) { toast("至少保留一个模型", true); return; }
+    const entry = providerEntry(prov) || {};
+    askConfirm("删除模型", "确定从「" + providerName(prov) + "」中删除模型「" + label + "」吗？", "删除")
+      .then((ok) => {
+        if (!ok) return null;
+        const config = {
+          name: entry.name || prov,
+          baseUrl: entry.baseUrl || "",
+          models: models.filter((m) => m.id !== mid)
+        };
+        return fetch("/api/models-custom", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "save", provider: prov, original: prov, config: config })
+        })
+          .then(readJsonOrThrow)
+          .then((d) => {
+            customCatalog = (d && d.custom) || {};
+            rebuildCatalog();
+            if (!modelMeta(prov, modelId)) {
+              const rest = modelsOf(prov);
+              modelId = rest.length ? rest[0].id : "";
+            }
+            refreshCatalogUI();
+            toast("已删除模型：" + label);
+          });
+      })
+      .catch((e) => toast("删除失败：" + e.message, true));
   }
 
   function deleteProvider(pid) {
@@ -1344,87 +1661,104 @@ c:
     });
   }
 
-  /* ============ proxy detection & API Key（apikey.json，按 Provider 分组） ============ */
+  /* ============ proxy detection & API Key（apikey / apikey-custom） ============ */
   let proxyAvailable = false;
   let serverConfig = null;
 
-  const KEY_MANUAL = "__manual__";
   let providerKeys = [];          // 当前 Provider 的 Key 提示：[{hint, len}]
-  let keyMode = "manual";         // "stored" | "manual"
   let keyIndex = -1;
-  const keyChoice = {};           // 记住每个 Provider 的选择
+  const keyChoice = {};           // 记住每个 Provider 选中的 Key
 
-  function saveKeyChoice() {
-    if (providerId) keyChoice[providerId] = { mode: keyMode, index: keyIndex };
+  function keyChoiceSave() {
+    if (providerId) keyChoice[providerId] = { index: keyIndex };
   }
 
   function loadProviderKeys(provider) {
     providerKeys = [];
-    keyMode = "manual"; keyIndex = -1;
-    if (!proxyAvailable || !provider) { renderKeyUI(); return Promise.resolve(); }
+    keyIndex = -1;
+    if (!proxyAvailable || !provider) { renderKeyMenu(); return Promise.resolve(); }
     return fetch("/api/keys?provider=" + encodeURIComponent(provider), { cache: "no-store" })
       .then((r) => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
       .then((d) => { providerKeys = (d && Array.isArray(d.keys)) ? d.keys : []; })
       .catch((e) => {
         providerKeys = [];
-        if (window.console) console.warn("加载 apikey.json 失败:", e);
+        if (window.console) console.warn("加载 API Key 列表失败:", e);
       })
       .then(() => {
         const c = keyChoice[provider];
-        if (c && c.mode === "manual") { keyMode = "manual"; keyIndex = -1; }
-        else if (providerKeys.length) {
-          keyMode = "stored";
-          keyIndex = (c && typeof c.index === "number" && c.index >= 0 && c.index < providerKeys.length) ? c.index : 0;
-        }
-        renderKeyUI();
+        const want = (c && typeof c.index === "number") ? c.index : 0;
+        keyIndex = providerKeys.length ? Math.min(Math.max(want, 0), providerKeys.length - 1) : -1;
+        renderKeyMenu();
       });
   }
 
-  function renderKeyUI() {
-    const sel = el.apiKeySel;
-    if (!sel) return;
-
-    sel.innerHTML = "";
-    providerKeys.forEach((k, i) => {
-      const o = document.createElement("option");
-      o.value = String(i);
-      o.textContent = (k && k.hint) || ("key " + (i + 1));
-      sel.appendChild(o);
-    });
-    const mo = document.createElement("option");
-    mo.value = KEY_MANUAL;
-    mo.textContent = "填写";
-    sel.appendChild(mo);
-
-    // 没有可用 Key 时自动切换到「填写」
-    if (!providerKeys.length) { keyMode = "manual"; keyIndex = -1; }
-    else if (keyMode === "stored" && (keyIndex < 0 || keyIndex >= providerKeys.length)) keyIndex = 0;
-    sel.value = (keyMode === "manual") ? KEY_MANUAL : String(keyIndex);
-
-    const manual = keyMode === "manual";
-    sel.classList.toggle("is-hidden", manual);
-    if (el.apiKey) {
-      el.apiKey.classList.toggle("is-hidden", !manual);
-      el.apiKey.placeholder = proxyAvailable ? "粘贴 API Key…（可保存）" : "粘贴 API Key…";
-    }
-    if (el.saveKeyBtn) el.saveKeyBtn.classList.toggle("is-hidden", !manual);
-
-    if (el.keySource) {
-      el.keySource.innerHTML = providerKeys.length
-        ? '<span class="chip mint">apikey.json</span><span class="chip">' + providerKeys.length + " 个</span>"
-        : '<span class="chip">' + (proxyAvailable ? "未配置" : "直连") + "</span>";
-    }
+  function keyRequest(body) {
+    return fetch("/api/keys", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ provider: providerId }, body))
+    }).then(readJsonOrThrow);
   }
 
-  if (el.apiKeySel) {
-    el.apiKeySel.addEventListener("change", () => {
-      const v = el.apiKeySel.value;
-      if (v === KEY_MANUAL) { keyMode = "manual"; keyIndex = -1; }
-      else { keyMode = "stored"; keyIndex = Number(v) || 0; }
-      saveKeyChoice();
-      renderKeyUI();
-      if (keyMode === "manual" && el.apiKey) el.apiKey.focus();
-    });
+  function keysEditable() {
+    if (!proxyAvailable) { toast("请先运行本地服务（python server.py）", true); return false; }
+    if (!isCustomProvider(providerId)) { toast("仅自定义 Provider 可修改 API Key", true); return false; }
+    return true;
+  }
+
+  function addApiKey() {
+    if (!keysEditable()) return;
+    askPrompt("添加 API Key", "为「" + providerLabel(providerId) + "」添加一个 API Key：", "", "添加")
+      .then((key) => {
+        if (!key) return null;
+        return keyRequest({ action: "add", key: key }).then((d) => {
+          providerKeys = (d && Array.isArray(d.keys)) ? d.keys : providerKeys;
+          keyIndex = (d && typeof d.index === "number" && d.index >= 0) ? d.index : 0;
+          keyChoiceSave();
+          renderKeyMenu();
+          toast("已添加 API Key");
+        });
+      })
+      .catch((e) => toast("添加失败：" + e.message, true));
+  }
+
+  function editApiKey(i) {
+    if (!keysEditable()) return;
+    fetch("/api/keys?provider=" + encodeURIComponent(providerId) + "&full=1", { cache: "no-store" })
+      .then((r) => r.ok ? r.json() : Promise.reject(new Error("HTTP " + r.status)))
+      .then((d) => {
+        const list = (d && Array.isArray(d.keys)) ? d.keys : [];
+        const cur = (list[i] && list[i].key) ? list[i].key : "";
+        return askPrompt("编辑 API Key", "修改「" + providerLabel(providerId) + "」的第 " + (i + 1) + " 个 API Key：", cur, "保存")
+          .then((key) => {
+            if (!key || key === cur) return null;
+            return keyRequest({ action: "update", index: i, key: key }).then((r2) => {
+              providerKeys = (r2 && Array.isArray(r2.keys)) ? r2.keys : providerKeys;
+              keyIndex = i;
+              keyChoiceSave();
+              renderKeyMenu();
+              toast("已更新 API Key");
+            });
+          });
+      })
+      .catch((e) => toast("更新失败：" + e.message, true));
+  }
+
+  function deleteApiKey(i) {
+    if (!keysEditable()) return;
+    const hint = (providerKeys[i] && providerKeys[i].hint) || ("第 " + (i + 1) + " 个");
+    askConfirm("删除 API Key", "确定删除「" + providerLabel(providerId) + "」的 API Key「" + hint + "」吗？", "删除")
+      .then((ok) => {
+        if (!ok) return null;
+        return keyRequest({ action: "delete", index: i }).then((d) => {
+          providerKeys = (d && Array.isArray(d.keys)) ? d.keys : [];
+          keyIndex = providerKeys.length ? Math.min(i, providerKeys.length - 1) : -1;
+          keyChoiceSave();
+          renderKeyMenu();
+          toast("已删除 API Key");
+        });
+      })
+      .catch((e) => toast("删除失败：" + e.message, true));
   }
 
   fetch("/api/health", { cache: "no-store" })
@@ -1432,7 +1766,7 @@ c:
     .then((d) => {
       proxyAvailable = !!(d && d.ok);
       setProxyStatus(proxyAvailable ? "代理已连接" : "直连模式", proxyAvailable ? "ok" : "warn");
-      if (!proxyAvailable) { renderKeyUI(); return; }
+      if (!proxyAvailable) { renderKeyMenu(); return; }
       return fetch("/api/config", { cache: "no-store" })
         .then((r) => r.ok ? r.json() : null)
         .then((cfg) => { if (cfg) serverConfig = cfg; })
@@ -1443,35 +1777,8 @@ c:
     .catch((e) => {
       if (window.console) console.error("proxy detection failed:", e);
       setProxyStatus("直连模式（可能受 CORS 限制）", "bad");
-      renderKeyUI();
+      renderKeyMenu();
     });
-
-  if (el.saveKeyBtn) {
-    el.saveKeyBtn.addEventListener("click", () => {
-      const key = el.apiKey ? el.apiKey.value.trim() : "";
-      if (!key) { toast("请填写要保存的 API Key", true); if (el.apiKey) el.apiKey.focus(); return; }
-      if (!providerId) { toast("请选择 Provider", true); return; }
-      if (!proxyAvailable) { toast("请运行本地服务（python server.py）再保存", true); return; }
-      el.saveKeyBtn.disabled = true;
-      fetch("/api/keys", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider: providerId, key: key })
-      })
-        .then(readJsonOrThrow)
-        .then((d) => {
-          providerKeys = (d && Array.isArray(d.keys)) ? d.keys : providerKeys;
-          if (el.apiKey) el.apiKey.value = "";
-          keyMode = "stored";
-          keyIndex = (d && typeof d.index === "number") ? d.index : 0;
-          saveKeyChoice();
-          renderKeyUI();
-          toast("API KEY 已保存");
-        })
-        .catch((e) => toast("API KEY 保存失败：" + e.message, true))
-        .finally(() => { el.saveKeyBtn.disabled = false; });
-    });
-  }
 
   function setProxyStatus(text, kind) {
     el.proxyText.textContent = text;
@@ -2099,7 +2406,6 @@ c:
 
   function run() {
     const apiUrl = currentApiUrl();
-    const apiKey = el.apiKey ? el.apiKey.value.trim() : "";
     const model = currentModelId();
 
     if (!apiUrl) {
@@ -2108,14 +2414,9 @@ c:
     }
     if (!model) { toast("请选择模型", true); return; }
 
-    // 使用 apikey.json 中的 Key，还是页面上手填的 Key
-    const useStored = (keyMode === "stored" && keyIndex >= 0 && keyIndex < providerKeys.length);
+    // 选中了 apikey.json / apikey-custom.json 中的 Key 就带上它的下标，否则回退到服务端默认 Key
+    const useStored = (keyIndex >= 0 && keyIndex < providerKeys.length);
     const keyRef = useStored ? { provider: providerId, index: keyIndex } : null;
-    if (!useStored && !apiKey) {
-      toast("请选择 API Key", true);
-      if (keyMode === "manual" && el.apiKey) el.apiKey.focus();
-      return;
-    }
     if (!questions.length) { toast("请至少添加一个问题", true); return; }
 
     // state
@@ -2177,7 +2478,7 @@ c:
     const orderedKeys = questions.map((q) => ({ id: q.id, key: keyById[q.id], label: (q.label || "").trim() || keyById[q.id], type: q.type }));
 
     setLoading(true);
-    callApi(apiUrl, useStored ? "" : apiKey, payload, keyRef)
+    callApi(apiUrl, "", payload, keyRef)
       .then((out) => {
         renderRun(out.data, orderedKeys, model, payload, undefined, out.logId);
         toast("SystemOne 已返回结果");
@@ -2616,22 +2917,49 @@ c:
 
   /* ---------- 确认弹窗 ---------- */
   let modalResolve = null;
+  let modalPrompt = false;
   function askConfirm(title, message, confirmText) {
     return new Promise(function (resolve) {
       modalResolve = resolve;
+      modalPrompt = false;
       if (el.modalTitle) el.modalTitle.textContent = title || "确认";
       if (el.modalMsg) el.modalMsg.textContent = message || "";
+      if (el.modalInput) el.modalInput.classList.add("is-hidden");
       if (el.modalOk) el.modalOk.textContent = confirmText || "确定";
       if (el.modal) el.modal.classList.remove("is-hidden");
       try { if (el.modalOk) el.modalOk.focus(); } catch (e) {}
     });
   }
+  // 带输入框的弹窗：确定返回输入内容（已 trim），取消返回 null
+  function askPrompt(title, message, value, confirmText) {
+    return new Promise(function (resolve) {
+      modalResolve = resolve;
+      modalPrompt = true;
+      if (el.modalTitle) el.modalTitle.textContent = title || "输入";
+      if (el.modalMsg) el.modalMsg.textContent = message || "";
+      if (el.modalInput) {
+        el.modalInput.classList.remove("is-hidden");
+        el.modalInput.value = value == null ? "" : String(value);
+      }
+      if (el.modalOk) el.modalOk.textContent = confirmText || "确定";
+      if (el.modal) el.modal.classList.remove("is-hidden");
+      try { if (el.modalInput) { el.modalInput.focus(); el.modalInput.select(); } } catch (e) {}
+    });
+  }
   function closeModal(result) {
     if (el.modal) el.modal.classList.add("is-hidden");
     const r = modalResolve; modalResolve = null;
-    if (r) r(result);
+    const wasPrompt = modalPrompt; modalPrompt = false;
+    const val = el.modalInput ? String(el.modalInput.value || "").trim() : "";
+    if (el.modalInput) { el.modalInput.value = ""; el.modalInput.classList.add("is-hidden"); }
+    if (!r) return;
+    if (wasPrompt) r(result ? val : null);
+    else r(result);
   }
   if (el.modalOk) el.modalOk.addEventListener("click", function () { closeModal(true); });
+  if (el.modalInput) el.modalInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); closeModal(true); }
+  });
   if (el.modalCancel) el.modalCancel.addEventListener("click", function () { closeModal(false); });
   if (el.modal) el.modal.addEventListener("click", function (e) { if (e.target === el.modal) closeModal(false); });
 
